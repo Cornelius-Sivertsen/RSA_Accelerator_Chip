@@ -19,39 +19,26 @@ def blakley_multiplication (a, b, n):
     return R
 
 
-def mod_exp_reducing_preprocessing(base, exponent, mod): 
-    num_bits = 3  # Nombre de bits par bloc
-
-    # Calculer le nombre de blocs nécessaires de longueur num_bits
-    s = (exponent.bit_length() + num_bits - 1) // num_bits 
-
-    # Pré-calculer les puissances de base
-    M = {}
-    M[0] = 1
-    for i in range(1, 8):
-        M[i] = blakley_multiplication(M[i - 1], base, mod)
-
-    # Décomposer l'exposant en mots de num_bits (3) bits
-    F = []
-    while exponent > 0:
-        tmp = 1 << num_bits
-        F.append(exponent % tmp) #e mod 0b100
-        exponent >>= num_bits
-
-    # Calculer l'exponentiation modulaire
-    C = M[F[s - 1]] % mod
-    for i in range(s - 2, -1, -1):
-        C = C ** (2**num_bits) % mod
-        if F[i] != 0:
-            C = blakley_multiplication(C, M[F[i]], mod)
-
+def mod_exp_binary(M, exp, mod):
+    # Convert the exponent to its binary form
+    bin_exp = bin(exp)[2:]  # Exp in binary form
+    length = len(bin_exp)
+    if bin_exp[length-1]=='1' :
+        C=M
+    else :
+        C=1
+    
+    for i in range (length-2,-1,-1):
+        C=blakley_multiplication(C,C,mod)
+        if bin_exp[i]==1:
+            C=blakley_multiplication(C,M,mod)
     return C
 
 
 def test_prepocessing (base, exp, mod) :
-    result = mod_exp_reducing_preprocessing(base, exp, mod)
+    result = mod_exp_binary(base, exp, mod)
     result=blakley_multiplication(base,exp,mod)
-    print(f"Result of {base}^{exp} mod {mod} = {result}")
+    #print(f"Result of {base}^{exp} mod {mod} = {result}")
     return result
 
 def gen_rand():
@@ -87,7 +74,7 @@ def test_encrypt():
       n = int(n, 0)
 
       expected = int("0x23026c469918f5ea097f843dc5d5259192f9d3510415841ce834324f4c237ac7",0)
-      actual = mod_exp_reducing_preprocessing(m, e, n)
+      actual = mod_exp_binary(m, e, n)
       if expected==actual :
         print("Encryption successful\n")
       else :
@@ -105,7 +92,7 @@ def test_decrypt():
        n = int(n, 0)
 
        expected = int("0x0000000011111111222222223333333344444444555555556666666677777777", 0)
-       actual = mod_exp_reducing_preprocessing(c, d, n)
+       actual = mod_exp_binary(c, d, n)
        if expected==actual :
             print("Decryption successful\n")
        else :
