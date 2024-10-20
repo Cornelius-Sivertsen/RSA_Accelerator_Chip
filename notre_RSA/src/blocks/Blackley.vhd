@@ -8,7 +8,8 @@ entity Blackley is
         RESET : in std_logic;
         CLOCK : in std_logic;
         In_Blakley_Value1, In_Blakley_Value2, In_Blakley_Mod : in std_logic_vector(255 downto 0);
-        Manual_Reset, Input_Ready : in std_logic;
+        -- Manual_Reset, 
+        Input_Ready : in std_logic;
 
         Out_Blackley : out std_logic_vector(255 downto 0);
         Result_ready : out std_logic
