@@ -56,7 +56,8 @@ begin
                     end if;
                     Reg_R <= std_logic_vector(shifted_R);
 
-                    -- Second Way to do the modulo -> if not choosen remove modulo_R_1 and modulo_R_2 and shifted_mod
+                    -- Second Way to do the modulo 
+                    -- -> if not choosen remove modulo_R_1 and modulo_R_2 and shifted_mod
                     shifted_mod := unsigned(Reg_Mod(254 downto 0) & '0');
                     modulo_R_1 := shifted_R - unsigned(Reg_Mod);
                     modulo_R_2 := shifted_R - shifted_mod;
