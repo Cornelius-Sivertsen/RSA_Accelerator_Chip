@@ -44,7 +44,9 @@ architecture expBehave of exponentiation is
     -- Blakely signals
     signal Sortie_blk_1     : std_logic_vector(C_block_size-1 downto 0);
     signal Sortie_blk_2     : std_logic_vector(C_block_size-1 downto 0);
-
+    -- input
+    signal Input_blk_1_ready : std_logic;
+    --output
     signal Ready_blk_1      :std_logic;
     signal Ready_blk_2      :std_logic;
 
@@ -69,9 +71,9 @@ architecture expBehave of exponentiation is
                 CLOCK                       => clk      ;
                 In_Blakley_Value1           => C_r      ;
                 In_Blakley_Value2           => C_r      ;
-                In_Blakley_Mod              => n        ;
+                In_Blakley_Mod              => mudulus  ;
                 --Manual_Reset                => -- FINIR
-                Input_Ready                 => trigger_reg;
+                Input_Ready                 => Input_blk_1_ready;
 
                 Out_Blackley :              => Sortie_blk_1;
                 Result_ready                => Ready_blk_1 ;
@@ -83,7 +85,7 @@ architecture expBehave of exponentiation is
                 CLOCK                       => clk      ;
                 In_Blakley_Value1           => Sortie_blk_1;
                 In_Blakley_Value2           => message     ;
-                In_Blakley_Mod              => n        ;
+                In_Blakley_Mod              => modulus       ;
                 --Manual_Reset                => -- FINIR
                 Input_Ready                 => Ready_blk_1 and MSF_exponent;
 
@@ -95,40 +97,60 @@ architecture expBehave of exponentiation is
             port map(
                 CLK       => clk;
                 RESET     => reset_n;
-                CONTROL => fill_E_and_C;
+                CONTROL => fill_E_and_C; -- a update chaque fois qu'un message est fini
                 TRIG    => trigger_reg;
                 DATA_IN  => key;
-                MSF_OUT  => MSF_exponent;
+                MSF_OUT  => MSF_exponent; -- on doit commencer à lenght-2 voir algo
             );
         
-        FSM : entity work.FSM --CHANGE NAME
-            port map(
-                reset => reset_n;
-                clock => clk;
-                trigger => trigger_reg;
-                calculation_finished =>calculation_finished;
-                write_back_resolution => fill_E_and_C;
-            );
+        -- FSM : entity work.FSM --CHANGE NAME
+        --     port map(
+        --         reset => reset_n;
+        --         clock => clk;
+        --         trigger => trigger_reg;
+        --         calculation_finished =>calculation_finished;
+        --         write_back_resolution => fill_E_and_C;
+        --     );
 
             -- FINIR
             -- FSM1 : entity work. 
 
         -- process des registers
-        process(clk, reset_n)
-            begin
-                if (reset_n = '0') then
-                    C_r <= (0 => '1', others => '0');
-		        elsif (rising_edge(clk)) then
-                    if (trigger='1') then
-                    C_r <= C_nxt;
+    process(clk, reset_n)
+        begin
+            if (reset_n = '0') then
+                C_r <= (0 => '1', others => '0');  -- Reset C_r to a known value
+                trigger_reg <= '0';
+                Input_blk_1_ready <= '0';
+            elsif rising_edge(clk) then
+                if Ready_blk_1 ='1' then
+                    if MSF_exponent /='1' then
+                        C_nxt <= Sortie_blk_1;
+                        trigger_reg <= 1;
+                    elsif Ready_blk_2 ='1' then -- vraiment ez, t as pas besoin de lire les commentaires
+                        C_nxt <= Sortie_blk_2;
+                        trigger_reg <= 1;
                     end if;
-                    
+                else
+                -- Reset trigger if Ready_blk_1 is not 1
+                    trigger_reg <= '0';  
                 end if;
-        end process;
-        
-
-
-        
                 
-                    
-end expBehave;
+                -- update of C_r
+                if fill_E_and_C = '1' and MSF_exponent = '1' then
+                    C_r <= message;  --update C_r with the message value
+                elsif trigger_reg = '1' then
+                    C_r <= C_nxt;  --update C_r with new calculated value
+                    Input_blk_1_ready <= '1';  
+                else
+                    Input_blk_1_ready <= '0';  -- Not ready
+                end if;
+        
+                -- OUT(PUTEEE)
+                if calculation_finished = '1' then
+                    result <= C_r;  -- assign C_r to result when calculation done
+                else
+                    result <= (others => '0');  --output soooooo much zeros if not finished
+                end if;
+            end if;
+        end process;
