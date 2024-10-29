@@ -8,7 +8,7 @@ ENTITY Shift_Register_With_MSF IS
     PORT (
         CLK       : IN  STD_LOGIC;
         RESET     : IN  STD_LOGIC;
-        CONTROL, TRIG   : IN  STD_LOGIC;
+        CONTROL, TRIG   : IN  STD_LOGIC; -- control to initialize it
 
         DATA_IN   : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
         --SHIFT_OUT : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);  
@@ -29,7 +29,7 @@ BEGIN
             if (CONTROL = '1') then
                 Reg <= DATA_IN;
             elsif (TRIG ='1') then
-                Reg <= Reg(N-2 downto 0) & '0';
+                Reg <= Reg(N-2 downto 0) & '0'; --shift left by one bite
             else 
                 Reg <= Reg;
             end if;
