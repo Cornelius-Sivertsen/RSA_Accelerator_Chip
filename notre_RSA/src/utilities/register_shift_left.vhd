@@ -8,9 +8,12 @@ ENTITY Shift_Register_With_MSF IS
     PORT (
         CLK       : IN  STD_LOGIC;
         RESET     : IN  STD_LOGIC;
+        CONTROL, TRIG   : IN  STD_LOGIC;
+
         DATA_IN   : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
-        SHIFT_OUT : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);  
-        MSF_OUT   : OUT STD_LOGIC                     
+        --SHIFT_OUT : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);  
+        MSF_OUT   : OUT STD_LOGIC
+                             
     );
 END entity;
 
@@ -20,15 +23,18 @@ BEGIN
 
     process (CLK, RESET)
     begin
-        if RESET = '1' then
+        if (RESET = '1') then
             Reg <= (others => '0');  
-        elsif rising_edge(CLK) then --rajoutersignal STEP de la FSM
-            LSF_OUT <= Reg(N-1);  --MSF extract
-            
-            Reg <= Reg(N-2 downto 0) & '0'; 
+        elsif rising_edge(CLK) then --rajouter signal STEP de la FSM
+            if (CONTROL = '1') then
+                Reg <= DATA_IN;
+            elsif (TRIG ='1') then
+                Reg <= Reg(N-2 downto 0) & '0';
+            else 
+                Reg <= Reg;
+            end if;
         end if;
+        MSF_OUT <= Reg(N-1);
     end process;
-
-    SHIFT_OUT <= Reg;  -- Sortie des données après décalage
 
 END ARCHITECTURE;
