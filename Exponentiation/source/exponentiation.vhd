@@ -49,10 +49,13 @@ architecture expBehave of exponentiation is
     signal Ready_blk_1      :std_logic;
     signal Ready_blk_2      :std_logic;
 
+	--register shift-left
+	signal trig_first_time_only : std_logic; --to shift left the exponent
+											 -- after 1st use of his MSF to initialize register C
 
     signal MSF_exponent     :std_logic;
     --FSM
-    signal fill_E_and_C      :std_logic; 
+    signal fill_E_and_C      :std_logic; --signal to first fill E and C
     signal calculation_finished : std_logic;
 
     
@@ -70,11 +73,11 @@ architecture expBehave of exponentiation is
                 CLOCK                       => clk      ;
                 In_Blakley_Value1           => C_r      ;
                 In_Blakley_Value2           => C_r      ;
-                In_Blakley_Mod              => mudulus  ;
+                In_Blakley_Mod              => modulus  ;
                 --Manual_Reset                => -- FINIR
                 Input_Ready                 => Input_blk_1_ready;
 
-                Out_Blackley :              => Sortie_blk_1;
+                Out_Blackley                => Sortie_blk_1;
                 Result_ready                => Ready_blk_1 ;
             );
         BLACKLEY_2 : entity work.Blackley
@@ -88,18 +91,18 @@ architecture expBehave of exponentiation is
                 --Manual_Reset                => -- FINIR
                 Input_Ready                 => Ready_blk_1 and MSF_exponent;
 
-                Out_Blackley :              => Sortie_blk_2;
+                Out_Blackley                => Sortie_blk_2;
                 Result_ready                => Ready_blk_2 ;
             );
 
         REGISTER_E : entity work.register_shift_left
             port map(
-                CLK       => clk;
-                RESET     => reset_n;
-                CONTROL => fill_E_and_C; -- a update chaque fois qu'un message est fini
-                TRIG    => trigger_reg;
-                DATA_IN  => key;
-                MSF_OUT  => MSF_exponent; -- on doit commencer à lenght-2 voir algo
+                CLK       	=> clk;
+                RESET     	=> reset_n;
+                CONTROL 	=> fill_E_and_C; -- a update chaque fois qu'un message est fini
+                TRIG    	=> trigger_reg or trig_first_time_only;
+                DATA_IN 	=> key;
+                MSF_OUT  	=> MSF_exponent; -- on doit commencer à lenght-2 voir algo
             );
         
         -- FSM : entity work.FSM --CHANGE NAME
@@ -135,17 +138,27 @@ architecture expBehave of exponentiation is
                     trigger_reg <= '0';  
                 end if;
                 
-                -- update of C_r
-                if fill_E_and_C = '1' and MSF_exponent = '1' then
-                    C_r <= message;  --update C_r with the message value
-                elsif trigger_reg = '1' then
+                -- update of C_r for each new message
+				-- done once per message
+                if fill_E_and_C = '1' then
+					if MSF_exponent /= '0' then
+						C_r <= message; --update C_r with the message value
+					elsif MSF_exponent = '0' then
+						C_r <= '1'; -- if the signal is out of the fsm only the 1st time or not changes everything
+					end if;
+					trig_first_time_only <= '1';
+				else 
+					trig_first_time_only <= '0';
+				end if;
+
+				if trigger_reg = '1' then
                     C_r <= C_nxt;  --update C_r with new calculated value
                     Input_blk_1_ready <= '1';  
                 else
                     Input_blk_1_ready <= '0';  -- Not ready
                 end if;
         
-                -- OUT(PUTEEE)
+                -- OUT(PUTE)
                 if calculation_finished = '1' then
                     result <= C_r;  -- assign C_r to result when calculation done
                 else
