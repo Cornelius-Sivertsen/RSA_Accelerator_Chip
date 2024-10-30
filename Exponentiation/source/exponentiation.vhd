@@ -69,40 +69,40 @@ architecture expBehave of exponentiation is
         BLACKLEY_1 : entity work.Blackley
             port map (
 
-                RESET                       => reset_n  ;
-                CLOCK                       => clk      ;
-                In_Blakley_Value1           => C_r      ;
-                In_Blakley_Value2           => C_r      ;
-                In_Blakley_Mod              => modulus  ;
+                RESET                       => reset_n  ,
+                CLOCK                       => clk      ,
+                In_Blakley_Value1           => C_r      ,
+                In_Blakley_Value2           => C_r      ,
+                In_Blakley_Mod              => modulus  ,
                 --Manual_Reset                => -- FINIR
-                Input_Ready                 => Input_blk_1_ready;
+                Input_Ready                 => Input_blk_1_ready ,
 
-                Out_Blackley                => Sortie_blk_1;
-                Result_ready                => Ready_blk_1 ;
+                Out_Blackley                => Sortie_blk_1 ,
+                Result_ready                => Ready_blk_1
             );
         BLACKLEY_2 : entity work.Blackley
             port map (
 
-                RESET                       => reset_n  ;
-                CLOCK                       => clk      ;
-                In_Blakley_Value1           => Sortie_blk_1;
-                In_Blakley_Value2           => message     ;
-                In_Blakley_Mod              => modulus       ;
+                RESET                       => reset_n  ,
+                CLOCK                       => clk      ,
+                In_Blakley_Value1           => Sortie_blk_1 ,
+                In_Blakley_Value2           => message      ,
+                In_Blakley_Mod              => modulus      ,
                 --Manual_Reset                => -- FINIR
-                Input_Ready                 => Ready_blk_1 and MSF_exponent;
+                Input_Ready                 => Ready_blk_1 and MSF_exponent,
 
-                Out_Blackley                => Sortie_blk_2;
-                Result_ready                => Ready_blk_2 ;
+                Out_Blackley                => Sortie_blk_2,
+                Result_ready                => Ready_blk_2 
             );
 
         REGISTER_E : entity work.register_shift_left
             port map(
-                CLK       	=> clk;
-                RESET     	=> reset_n;
-                CONTROL 	=> fill_E_and_C; -- a update chaque fois qu'un message est fini
-                TRIG    	=> trigger_reg or trig_first_time_only;
-                DATA_IN 	=> key;
-                MSF_OUT  	=> MSF_exponent; -- on doit commencer à lenght-2 voir algo
+                CLK       	=> clk,
+                RESET     	=> reset_n,
+                CONTROL 	=> fill_E_and_C, -- a update chaque fois qu'un message est fini
+                TRIG    	=> trigger_reg or trig_first_time_only,
+                DATA_IN 	=> key,
+                MSF_OUT  	=> MSF_exponent -- on doit commencer à lenght-2 voir algo
             );
         
         -- FSM : entity work.FSM --CHANGE NAME
@@ -128,10 +128,10 @@ architecture expBehave of exponentiation is
                 if Ready_blk_1 ='1' then
                     if MSF_exponent /='1' then
                         C_nxt <= Sortie_blk_1;
-                        trigger_reg <= 1;
+                        trigger_reg <= '1';
                     elsif Ready_blk_2 ='1' then -- vraiment ez, t as pas besoin de lire les commentaires
                         C_nxt <= Sortie_blk_2;
-                        trigger_reg <= 1;
+                        trigger_reg <= '1';
                     end if;
                 else
                 -- Reset trigger if Ready_blk_1 is not 1
@@ -144,8 +144,9 @@ architecture expBehave of exponentiation is
 					if MSF_exponent /= '0' then
 						C_r <= message; --update C_r with the message value
 					elsif MSF_exponent = '0' then
-						C_r <= '1'; -- if the signal is out of the fsm only the 1st time or not changes everything
-					end if;
+                        C_r <= (others => '0'); -- if the signal is out of the fsm only the 1st time or not changes everything
+                        C_r(0) <= '1';
+                        end if;
 					trig_first_time_only <= '1';
 				else 
 					trig_first_time_only <= '0';
