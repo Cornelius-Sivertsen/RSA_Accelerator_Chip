@@ -105,46 +105,43 @@ architecture expBehave of exponentiation is
                 MSF_OUT  	=> MSF_exponent -- on doit commencer à lenght-2 voir algo
             );
         
-        -- FSM : entity work.FSM --CHANGE NAME
-        --     port map(
-        --         reset => reset_n;
-        --         clock => clk;
-        --         trigger => trigger_reg;
-        --         calculation_finished =>calculation_finished;
-        --         write_back_resolution => fill_E_and_C;
-        --     );
-
-            -- FINIR
-            -- FSM1 : entity work. 
+        FSM : entity work.mod_exp_fsm
+            port map(
+                reset => reset_n,
+                clock => clk,
+                manual_reset => manual_reset,
+                trigger => trigger_reg,
+                calculation_finished =>calculation_finished,
+                write_back_resolution => fill_E_and_C
+            );
 
         -- process des registers
     process(clk, reset_n)
         begin
             if (reset_n = '0') then
-                C_r <= (0 => '1', others => '0');  -- Reset C_r to a known value
+                C_r <= (0 => '1', others => '0');   -- Reset C_r to a known value
                 trigger_reg <= '0';
                 Input_blk_1_ready <= '0';
             elsif rising_edge(clk) then
-                if Ready_blk_1 ='1' then
-                    if MSF_exponent /='1' then
-                        C_nxt <= Sortie_blk_1;
+                if Ready_blk_1 ='1' then            -- Check if we need to do Blackey_2
+                    if MSF_exponent /='1' then      
+                        C_nxt <= Sortie_blk_1;      
                         trigger_reg <= '1';
-                    elsif Ready_blk_2 ='1' then -- vraiment ez, t as pas besoin de lire les commentaires
+                    elsif Ready_blk_2 ='1' then     -- Waiting for Blackley_2 to be finished
                         C_nxt <= Sortie_blk_2;
                         trigger_reg <= '1';
                     end if;
                 else
-                -- Reset trigger if Ready_blk_1 is not 1
-                    trigger_reg <= '0';  
+                    trigger_reg <= '0';             -- Reset trigger if Ready_blk_1 is not 1  
                 end if;
                 
                 -- update of C_r for each new message
 				-- done once per message
                 if fill_E_and_C = '1' then
 					if MSF_exponent /= '0' then
-						C_r <= message; --update C_r with the message value
+						C_r <= message;             --update C_r with the message value
 					elsif MSF_exponent = '0' then
-                        C_r <= (others => '0'); -- if the signal is out of the fsm only the 1st time or not changes everything
+                        C_r <= (others => '0');     -- if the signal is out of the fsm only the 1st time or not changes everything
                         C_r(0) <= '1';
                         end if;
 					trig_first_time_only <= '1';
@@ -153,17 +150,17 @@ architecture expBehave of exponentiation is
 				end if;
 
 				if trigger_reg = '1' then
-                    C_r <= C_nxt;  --update C_r with new calculated value
+                    C_r <= C_nxt;                    --update C_r with new calculated value
                     Input_blk_1_ready <= '1';  
                 else
-                    Input_blk_1_ready <= '0';  -- Not ready
+                    Input_blk_1_ready <= '0';       -- Not ready
                 end if;
         
                 -- OUT(PUTE)
                 if calculation_finished = '1' then
-                    result <= C_r;  -- assign C_r to result when calculation done
+                    result <= C_r;                  -- assign C_r to result when calculation done
                 else
-                    result <= (others => '0');  --output soooooo much zeros if not finished
+                    result <= (others => '0');      --output zeros if not finished
                 end if;
             end if;
         end process;
