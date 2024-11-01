@@ -118,7 +118,7 @@ architecture expBehave of exponentiation is
         -- process des registers
     process(clk, reset_n)
         begin
-            if (reset_n = '0') then
+            if (reset_n = '1') then
                 C_r <= (0 => '1', others => '0');   -- Reset C_r to a known value
                 trigger_reg <= '0';
                 Input_blk_1_ready <= '0';
@@ -157,6 +157,8 @@ architecture expBehave of exponentiation is
                 end if;
         
                 -- OUT(PUTE)
+                -- gérer la remise à 0 de calculation_finished
+                -- qu'il se remette à 0 au bon moment
                 if calculation_finished = '1' then
                     result <= C_r;                  -- assign C_r to result when calculation done
                 else
