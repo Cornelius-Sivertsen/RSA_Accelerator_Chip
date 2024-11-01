@@ -34,7 +34,6 @@ BEGIN
                 Reg <= Reg;
             end if;
         end if;
-        MSF_OUT <= Reg(N-1);
     end process;
-
+    MSF_OUT <= Reg(N-1);
 END ARCHITECTURE;
