@@ -3,38 +3,58 @@
 --idles when no trigger input is given
 --goes into idle at 254, as the given application only does
 --255 (0-254) iterations.
-LIBRARY ieee;
-USE ieee.std_logic_1164.all;
-USE ieee.numeric_std.all;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-ENTITY counter IS
-		port(
-					RESET: IN STD_LOGIC;
-					CLOCK: IN STD_LOGIC;
-					manual_reset: IN STD_LOGIC;
-					Trigger: IN STD_LOGIC;
-					--counter_value: OUT STD_LOGIC_VECTOR(7 downto 0) Might have to be changed back to logic_vector, but using integer simplifies things
-					counter_value: OUT integer range 0 to 254
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
 
-);
-END entity;
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity counter is
+  Port ( Reset : in STD_LOGIC;
+         Clock : in STD_LOGIC;
+         Manual_reset : in STD_LOGIC;
+         Trigger : in STD_LOGIC;
+         Counter_val_out : out integer range 0 to 254
+         );
+end counter;
 
 
-ARCHITECTURE count_up OF counter IS
-		signal count_reg: integer;
-
+architecture Behavioral of counter is
 begin
-		counter_value <= count_reg;
-		process (CLOCK, RESET)
-		begin
-				if RESET = '1' or (rising_edge(CLOCK) and (manual_reset = '1')) then
-						count_reg <= 0;
-				elsif count_reg = 254 then
-				        count_reg <= 254; -- idle at max counter val
-				elsif rising_edge(CLOCK) and rising_edge(Trigger) then
-						count_reg <= count_reg + 1;
-				else
-				        count_reg <= count_reg;   -- do nothing
-				end if;
-		end process;
-end architecture;
+
+  process(Clock, Reset, Manual_reset, trigger)
+    variable internal_counter_val: integer range 0 to 254;
+  begin
+
+    if RESET = '1' then
+      internal_counter_val := 0;
+    elsif rising_edge(clock) then
+      if manual_reset = '1' then
+        -- NOTE: 
+        -- At least in the simulator,
+        -- manual reset has to already
+        -- be at '1' when the clock pulse
+        -- happens. If both happen at the
+        -- exact same time, it does not work.
+        internal_counter_val := 0;
+      elsif (internal_counter_val < 254 and
+             trigger = '1') then
+        -- Same note as above applies for "trigger" here.
+        internal_counter_val := internal_counter_val + 1;
+      else
+        internal_counter_val := internal_counter_val; -- do nothing
+      end if;
+    end if;
+
+    -- output is updated every clock cycle
+    counter_val_out <= internal_counter_val;
+
+  end process;
+end Behavioral;
+
