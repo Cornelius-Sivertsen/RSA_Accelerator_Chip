@@ -119,7 +119,9 @@ architecture expBehave of exponentiation is
                 
             );
 
-        -- process des registers
+        
+    internal_reset <= ready_out and valid_in ;
+
     process(clk, reset_n)
         begin
             if ((reset_n = '1') or (internal_reset = '1')) then
@@ -142,7 +144,7 @@ architecture expBehave of exponentiation is
                 
                 -- update of C_r for each new message
 				-- done once per message
-                if fill_E_and_C = '1' then
+                if fill_E_and_C = '1' and valid_in ='1' then
 					if MSF_exponent /= '0' then
 						C_r <= message;             --update C_r with the message value
 					elsif MSF_exponent = '0' then
