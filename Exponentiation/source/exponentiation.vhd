@@ -56,10 +56,11 @@ architecture expBehave of exponentiation is
     signal MSF_exponent     :std_logic;
     --FSM
     signal fill_E_and_C      :std_logic; --signal to first fill E and C
-    signal calculation_finished : std_logic;
-
+    --signal ready_out : std_logic;
+    --signal msgin_ready : std_logic;
+    --signal msgin_valid : std_logic;
     
-    
+    signal internal_reset : std_logic;
 
 	--result <= message xor modulus;
 	--ready_in <= ready_out;
@@ -109,19 +110,23 @@ architecture expBehave of exponentiation is
             port map(
                 reset => reset_n,
                 clock => clk,
-                manual_reset => manual_reset,
                 trigger => trigger_reg,
-                calculation_finished =>calculation_finished,
-                write_back_resolution => fill_E_and_C
+                msgin_valid => valid_in,
+                write_back_resolution => fill_E_and_C,
+                manual_reset => manual_reset,
+                msgin_ready =>ready_in,
+                msgout_valid =>ready_out
+                
             );
 
         -- process des registers
     process(clk, reset_n)
         begin
-            if (reset_n = '1') then
+            if ((reset_n = '1') or (internal_reset = '1')) then
                 C_r <= (0 => '1', others => '0');   -- Reset C_r to a known value
                 trigger_reg <= '0';
                 Input_blk_1_ready <= '0';
+                Input_blk_2_ready <= '0';
             elsif rising_edge(clk) then
                 if Ready_blk_1 ='1' then            -- Check if we need to do Blackey_2
                     if MSF_exponent /='1' then      
@@ -157,9 +162,9 @@ architecture expBehave of exponentiation is
                 end if;
         
                 -- OUT(PUTE)
-                -- gérer la remise à 0 de calculation_finished
+                -- gérer la remise à 0 de ready_out
                 -- qu'il se remette à 0 au bon moment
-                if calculation_finished = '1' then
+                if (ready_out ='1') then
                     result <= C_r;                  -- assign C_r to result when calculation done
                 else
                     result <= (others => '0');      --output zeros if not finished
