@@ -178,7 +178,7 @@ architecture expBehave of exponentiation is
                 if (valid_out_var = '1') then
                     result <= C_r;                  -- assign C_r to result when calculation done
                 else
-                    result <= (others => '0');      --output zeros if not finished
+                    result <= (others => '1');      --output zeros if not finished
                 end if;
             end if;
         end process;
