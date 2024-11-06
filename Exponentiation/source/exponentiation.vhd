@@ -30,10 +30,149 @@ entity exponentiation is
 	);
 end exponentiation;
 
-
 architecture expBehave of exponentiation is
-begin
-	result <= message xor modulus;
-	ready_in <= ready_out;
-	valid_out <= valid_in;
-end expBehave;
+    -- registers
+    signal E_r              : std_logic_vector(C_block_size-1 downto 0); --register of exponent
+    signal C_r              : std_logic_vector(C_block_size-1 downto 0); --register of C
+    signal E_nxt            : std_logic_vector(C_block_size-1 downto 0);
+    signal C_nxt            : std_logic_vector(C_block_size-1 downto 0);
+
+    signal trigger_reg          : std_logic; -- register for the trigger signal from the FSM
+
+
+    -- Blakely signals
+    signal Sortie_blk_1     : std_logic_vector(C_block_size-1 downto 0);
+    signal Sortie_blk_2     : std_logic_vector(C_block_size-1 downto 0);
+    -- input
+    signal Input_blk_1_ready : std_logic;
+    --output
+    signal Ready_blk_1      :std_logic;
+    signal Ready_blk_2      :std_logic;
+
+	--register shift-left
+	signal trig_first_time_only : std_logic; --to shift left the exponent
+											 -- after 1st use of his MSF to initialize register C
+
+    signal MSF_exponent     :std_logic;
+    --FSM
+    signal fill_E_and_C      :std_logic; --signal to first fill E and C
+    --signal ready_out : std_logic;
+    --signal msgin_ready : std_logic;
+    --signal msgin_valid : std_logic;
+    
+    signal internal_reset : std_logic;
+
+	--result <= message xor modulus;
+	--ready_in <= ready_out;
+	--valid_out <= valid_in;
+
+    begin
+        BLACKLEY_1 : entity work.Blackley
+            port map (
+
+                RESET                       => reset_n  ,
+                CLOCK                       => clk      ,
+                In_Blakley_Value1           => C_r      ,
+                In_Blakley_Value2           => C_r      ,
+                In_Blakley_Mod              => modulus  ,
+                --Manual_Reset                => -- FINIR
+                Input_Ready                 => Input_blk_1_ready ,
+
+                Out_Blackley                => Sortie_blk_1 ,
+                Result_ready                => Ready_blk_1
+            );
+        BLACKLEY_2 : entity work.Blackley
+            port map (
+
+                RESET                       => reset_n  ,
+                CLOCK                       => clk      ,
+                In_Blakley_Value1           => Sortie_blk_1 ,
+                In_Blakley_Value2           => message      ,
+                In_Blakley_Mod              => modulus      ,
+                --Manual_Reset                => -- FINIR
+                Input_Ready                 => Ready_blk_1 and MSF_exponent,
+
+                Out_Blackley                => Sortie_blk_2,
+                Result_ready                => Ready_blk_2 
+            );
+
+        REGISTER_E : entity work.register_shift_left
+            port map(
+                CLK       	=> clk,
+                RESET     	=> reset_n,
+                CONTROL 	=> fill_E_and_C, -- a update chaque fois qu'un message est fini
+                TRIG    	=> trigger_reg or trig_first_time_only,
+                DATA_IN 	=> key,
+                MSF_OUT  	=> MSF_exponent -- on doit commencer à lenght-2 voir algo
+            );
+        
+        FSM : entity work.mod_exp_fsm
+            port map(
+                reset => reset_n,
+                clock => clk,
+                trigger => trigger_reg,
+                msgin_valid => valid_in,
+                write_back_resolution => fill_E_and_C,
+                manual_reset => manual_reset,
+                msgin_ready =>ready_in,
+                msgout_valid =>ready_out
+                
+            );
+
+        
+    
+
+    process(clk, reset_n)
+        begin
+            if ((reset_n = '1') or (internal_reset = '1')) then
+                C_r <= (0 => '1', others => '0');   -- Reset C_r to a known value
+                trigger_reg <= '0';
+                Input_blk_1_ready <= '0';
+                Input_blk_2_ready <= '0';
+            elsif rising_edge(clk) then
+                internal_reset <= ready_out and valid_in ;
+                
+                if Ready_blk_1 ='1' then            -- Check if we need to do Blackey_2
+                    if MSF_exponent /='1' then      
+                        C_nxt <= Sortie_blk_1;      
+                        trigger_reg <= '1';
+                    elsif Ready_blk_2 ='1' then     -- Waiting for Blackley_2 to be finished
+                        C_nxt <= Sortie_blk_2;
+                        trigger_reg <= '1';
+                    end if;
+                else
+                    trigger_reg <= '0';             -- Reset trigger if Ready_blk_1 is not 1  
+                end if;
+                
+                -- update of C_r for each new message
+				-- done once per message
+                if fill_E_and_C = '1' and valid_in ='1' then
+					if MSF_exponent /= '0' then
+						C_r <= message;             --update C_r with the message value
+					elsif MSF_exponent = '0' then
+                        C_r <= (others => '0');     -- if the signal is out of the fsm only the 1st time or not changes everything
+                        C_r(0) <= '1';
+                        end if;
+					trig_first_time_only <= '1';
+				else 
+					trig_first_time_only <= '0';
+				end if;
+
+				if trigger_reg = '1' then
+                    C_r <= C_nxt;                    --update C_r with new calculated value
+                    Input_blk_1_ready <= '1';  
+                else
+                    Input_blk_1_ready <= '0';       -- Not ready
+                end if;
+        
+                -- OUT(PUTE)
+                -- gérer la remise à 0 de ready_out
+                -- qu'il se remette à 0 au bon moment
+                if (ready_out ='1') then
+                    result <= C_r;                  -- assign C_r to result when calculation done
+                else
+                    result <= (others => '0');      --output zeros if not finished
+                end if;
+            end if;
+        end process;
+
