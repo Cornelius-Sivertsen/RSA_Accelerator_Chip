@@ -120,7 +120,7 @@ architecture expBehave of exponentiation is
             );
 
         
-    internal_reset <= ready_out and valid_in ;
+    
 
     process(clk, reset_n)
         begin
@@ -130,6 +130,8 @@ architecture expBehave of exponentiation is
                 Input_blk_1_ready <= '0';
                 Input_blk_2_ready <= '0';
             elsif rising_edge(clk) then
+                internal_reset <= ready_out and valid_in ;
+                
                 if Ready_blk_1 ='1' then            -- Check if we need to do Blackey_2
                     if MSF_exponent /='1' then      
                         C_nxt <= Sortie_blk_1;      
