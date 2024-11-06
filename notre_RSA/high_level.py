@@ -8,7 +8,7 @@ def blakley_multiplication (a, b, n):
     b_bin="{0:0256b}".format(b)
     k = len(b_bin)
 
-    for i in range(1,k):
+    for i in range(0,k):
             #print(f"bl {i}")
             R= 2 * R + (int((b >> (k - 1 - i)) & 1)) * a
             #print((b >> (k - 1 - i)) & 1)
@@ -47,19 +47,19 @@ def gen_rand():
   modulo = random.randrange(base, base+10000, 2)
   return base, exp, modulo
 
-moyenne=0
-for i in range(100) :
-    start_time=time.time()
-    base, exp, modulo = gen_rand()
-    r1=test_prepocessing(base,exp,modulo)
-    #r2=test_prepocessing(base, exp, modulo)
-    '''if r1 != r2 :
-        print(f"correct : {(base**exp)%modulo} R1 : {r1} and R2 {r2}\n")
-    else :
-        print("correct")'''
-    moyenne += time.time() - start_time
+# moyenne=0
+# for i in range(100) :
+#     start_time=time.time()
+#     base, exp, modulo = gen_rand()
+#     r1=test_prepocessing(base,exp,modulo)
+#     #r2=test_prepocessing(base, exp, modulo)
+#     '''if r1 != r2 :
+#         print(f"correct : {(base**exp)%modulo} R1 : {r1} and R2 {r2}\n")
+#     else :
+#         print("correct")'''
+#     moyenne += time.time() - start_time
 
-print(f"programme : {moyenne/100}")
+# print(f"programme : {moyenne/100}")
 
 
 def test_encrypt():
@@ -101,14 +101,17 @@ def test_decrypt():
 
 moyenne=0
 
-start_time=time.time()
-test_encrypt()
-test_decrypt()
+# start_time=time.time()
+# test_encrypt()
+# test_decrypt()
 #test_prepocessing(2,5,3)
-moyenne += time.time() - start_time
+# moyenne += time.time() - start_time
 
-print(f"programme encrypt : {moyenne/100}")
+# print(f"programme encrypt : {moyenne/100}")
 #test_encrypt()
 #test_decrypt()
-
-
+value1 = int("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA", 16)
+print(value1)
+value2 = int("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF9", 16)
+mod = int("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB", 16)
+blakley_multiplication(value1, value2, mod)
