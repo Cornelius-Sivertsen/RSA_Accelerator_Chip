@@ -74,7 +74,7 @@ architecture expBehave of exponentiation is
         BLACKLEY_1 : entity work.Blackley(blackley_archi_v2)
             port map (
 
-                RESET                       => reset_n  ,
+                RESET                       => not reset_n  ,
                 CLOCK                       => clk      ,
                 In_Blakley_Value1           => C_r      ,
                 In_Blakley_Value2           => C_r      ,
@@ -86,7 +86,7 @@ architecture expBehave of exponentiation is
         BLACKLEY_2 : entity work.Blackley(blackley_archi_v2)
             port map (
 
-                RESET                       => reset_n  ,
+                RESET                       => not reset_n  ,
                 CLOCK                       => clk      ,
                 In_Blakley_Value1           => Sortie_blk_1 ,
                 In_Blakley_Value2           => message      ,
@@ -99,7 +99,7 @@ architecture expBehave of exponentiation is
         REGISTER_E : entity work.Shift_Register_With_MSF
             port map(
                 CLK       	=> clk,
-                RESET     	=> reset_n or manual_reset,
+                RESET     	=> (not reset_n) or manual_reset,
                 CONTROL 	=> fill_E_and_C, -- a update chaque fois qu'un message est fini
                 TRIG    	=> trigger_reg_sig or trig_first_time_only,
                 DATA_IN 	=> key,
@@ -108,7 +108,7 @@ architecture expBehave of exponentiation is
         
         FSM : entity work.exp_fsm
             port map(
-                reset => reset_n,
+                reset => not reset_n,
                 clock => clk,
                 trigger => trigger_reg_sig,
                 msgin_valid => valid_in,
@@ -126,7 +126,7 @@ architecture expBehave of exponentiation is
      variable trigger_reg : std_logic := '0';
      variable valid_out_var :std_logic :='0';
         begin
-            if ((reset_n = '1') or (manual_reset = '1')) then
+            if ((reset_n = '0') or (manual_reset = '1')) then
                 C_r <= (0 => '1', others => '0');   -- Reset C_r to a known value
                 trigger_reg := '0';
                 Input_blk_1_ready <= '0';
