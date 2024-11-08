@@ -10,6 +10,7 @@ architecture behavior of tb_expBehave_2 is
     signal clk                 : std_logic := '0';
     signal reset_n             : std_logic := '1';
     signal condition_magique   : std_logic := '0';
+    signal trigger_r           : std_logic := '0';
     signal key                 : std_logic_vector(255 downto 0) := (others => '0');
     signal message             : std_logic_vector(255 downto 0) := (others => '0');
     signal modulus             : std_logic_vector(255 downto 0) := (others => '0');
@@ -20,24 +21,24 @@ architecture behavior of tb_expBehave_2 is
     signal result              : std_logic_vector(255 downto 0);
     signal trigger_count       : integer := 0;
 
-    -- Instanciation du composant à tester
-    component exponentiation
-        generic (
-            C_block_size : integer := 256
-        );
-        port(
-            valid_in       : in std_logic;
-            ready_in       : out std_logic;
-            message        : in std_logic_vector(255 downto 0);
-            key            : in std_logic_vector(255 downto 0);
-            ready_out      : in std_logic;
-            valid_out      : out std_logic;
-            result         : out std_logic_vector(255 downto 0);
-            modulus        : in std_logic_vector(255 downto 0);
-            clk            : in std_logic;
-            reset_n        : in std_logic
-        );
-    end component;
+    -- -- Instanciation du composant à tester
+    -- component exponentiation
+    --     generic (
+    --         C_block_size : integer := 256
+    --     );
+    --     port(
+    --         valid_in       : in std_logic;
+    --         ready_in       : out std_logic;
+    --         message        : in std_logic_vector(255 downto 0);
+    --         key            : in std_logic_vector(255 downto 0);
+    --         ready_out      : in std_logic;
+    --         valid_out      : out std_logic;
+    --         result         : out std_logic_vector(255 downto 0);
+    --         modulus        : in std_logic_vector(255 downto 0);
+    --         clk            : in std_logic;
+    --         reset_n        : in std_logic
+    --     );
+    -- end component;
 
 begin
     -- Instanciation de l'architecture expBehave_2
@@ -46,6 +47,7 @@ begin
             clk             => clk,
             reset_n         => reset_n,
             condition_magique => condition_magique,
+            trigger_r       => trigger_r,
             key             => key,
             message         => message,
             modulus         => modulus,
@@ -70,15 +72,30 @@ begin
     begin
         -- Réinitialisation du système
         reset_n <= '0';
-        wait for 20 ns;
+        wait for 120 ns;
         reset_n <= '1';
 
         -- Cas de test : Activer condition_magique
         condition_magique <= '1';
-        key <=     X"0000000000000000000000000000000000000000000000000000000000110101";
-        message <= X"0000000000000000000000000000000000000000000000000000000000000001";
+        key <=     X"F000000000000000000000000000000000000000000000000000000000110101";
+        message <= X"0000000000000000000000000000000000000000000000000000000000000111";
         modulus <= X"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
 
+        wait for 20 ns;
+        condition_magique <= '0';
+        
+        wait for 120 ns;
+        
+        reset_n <= '0';
+        wait for 120 ns;
+        reset_n <= '1';
+        
+        -- Cas de test : Activer condition_magique
+        condition_magique <= '1';
+        key <=     X"0000000000000000000000000000000000000000000000000000000000110101";
+        message <= X"0000000000000000000000000000000000000000000000000000000000110000";
+        modulus <= X"CCFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFCC";
+        
         wait for 20 ns;
         condition_magique <= '0';
 

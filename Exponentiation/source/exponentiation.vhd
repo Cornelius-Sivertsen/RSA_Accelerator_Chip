@@ -10,6 +10,7 @@ entity exponentiation is
 		valid_in	: in STD_LOGIC; --msgin_valid
 		ready_in	: out STD_LOGIC; -- msgin_ready
         condition_magique : in std_logic;
+        trigger_r   : out std_logic;
 		--input data
 		message 	: in STD_LOGIC_VECTOR ( C_block_size-1 downto 0 ); --msgin_data
 		key 		: in STD_LOGIC_VECTOR ( C_block_size-1 downto 0 ); --key_e
@@ -194,7 +195,9 @@ architecture expBehave_2 of exponentiation is
     signal C_r              : std_logic_vector(C_block_size-1 downto 0); --register of C
     signal E_nxt            : std_logic_vector(C_block_size-1 downto 0);
     signal C_nxt            : std_logic_vector(C_block_size-1 downto 0);
-    signal trigger_r, trigger_nxt : std_logic;
+    signal trigger_nxt : std_logic;
+    --signal trigger_r: std_logic;
+
     signal Input_blk_1_ready_nxt: std_logic;
 
     -- Blakely signals
@@ -256,7 +259,7 @@ begin
     process (clk, reset_n)
     begin 
         if (reset_n ='0') then
-            C_r <= (0 => '1', others => '0');   -- Reset C_r to a known value
+            C_r <= (others => '0');   -- Reset C_r to a known value
             E_r <= (others => '0');
             trigger_r <= '0';
             Input_blk_1_ready <= '0';
@@ -310,10 +313,12 @@ begin
 
         -- voir la condition du if avec Cornelius
         if condition_magique ='1' then
-            if key(255) /= '0' then -- ou mettre la condition dans ce if
-                C_nxt <= message;             --update C_r with the message value
+            if key(255) = '1' then -- ou mettre la condition dans ce if
+                C_nxt <= message; --update C_r with the message value
+                --C_nxt <= (255 downto 1 => '0') & '1';   -- TEST      
             else 
                 C_nxt <= (255 downto 1 => '0') & '1';     -- if the signal is out of the fsm only the 1st time or not changes everything
+                --C_nxt <= message; --TEST
             end if;
             Input_blk_1_ready_nxt <= '1';
             E_nxt <= key(254 downto 0 ) & '0'; -- stockage en shift left de l'exposant
