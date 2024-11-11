@@ -20,7 +20,7 @@ architecture blackley_archi_v3 of Blackley is
     signal Reg_Value1, Reg_Value1_next : std_logic_vector(255 downto 0) := (others => '0');
     signal Reg_Value2, Reg_Value2_next : std_logic_vector(255 downto 0) := (others => '0');
     signal Reg_Mod, Reg_Mod_next : std_logic_vector(255 downto 0) := (others => '0');
-    signal i, i_next : integer := 0;  -- signal i to replace the for loop
+    signal i, i_next : integer := 256;  -- signal i to replace the for loop
     signal R_next : std_logic_vector(255 downto 0) := (others => '0');
     signal sent_output, sent_output_next : std_logic := '0';
 
@@ -32,6 +32,10 @@ begin
             Reg_R <= (others => '0');
             i <= 256;  -- Reset i when RESET is active
             Result_ready <= '0';
+            sent_output <= '0';
+            Reg_Value1 <= (others => '0');
+            Reg_Value2 <= (others => '0');
+            Reg_Mod <= (others => '0');
         elsif rising_edge(CLOCK) then
             Reg_R <= R_next;
             Reg_Value1 <= Reg_Value1_next;
@@ -54,7 +58,7 @@ begin
         variable shifted_R : unsigned(257 downto 0); -- 257 and not 255 because we need to add one bit for the carry
         variable modulo_R_1, modulo_R_2, shifted_mod : signed(258 downto 0); -- 258 and not 255 because we need to add one bit for the carry and one bit for the sign
         variable Reg_Value1_var, Reg_Value2_var, Reg_Mod_var, Reg_R_var : std_logic_vector(255 downto 0) := (others => '0');
-        variable i_var : integer := 0;
+        variable i_var : integer := 256;
     begin
         if Input_Ready = '1' then
             Reg_Value1_var := In_Blakley_Value1;
