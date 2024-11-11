@@ -4,64 +4,76 @@ use IEEE.STD_LOGIC_1164.ALL;
 USE ieee.numeric_std.all;
 
 
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
 entity exp_fsm is
-    Port ( reset : in STD_LOGIC;
-           clock : in STD_LOGIC;
-           trigger : in STD_LOGIC;
-           msgin_valid : in STD_logic;
-           write_back_resolution : out STD_LOGIC; --indicates whether to write the input message, 
- 						  --or the feedback value to the main calculation register (register C).
- 						  --write_back_resolution = low -> Register C should read input message
-						  --write_back_resolution = high -> Register C should read feedback value.
-           manual_reset : out STD_LOGIC;
-           msgin_ready : out STD_LOGIC;
-           msgout_valid : out STD_LOGIC
-           );
-           
+  Port ( 
+    --INPUTS:
+    reset : in STD_LOGIC;
+    clock : in STD_LOGIC;
+    trigger : in STD_LOGIC;
+    msgin_valid : in STD_logic;
+    msgout_ready : IN std_logic;
+    ----------------------------------------
+    --OUTPUTS:
+    first_iteration: buffer std_logic;
+    msgin_ready : out STD_LOGIC;
+    msgout_valid : out STD_LOGIC;
+    calculation_finished : buffer std_logic -- à voir
+    );
+
 end exp_fsm;
 
 architecture Behavioral of exp_fsm is
 
-  signal counter_state: integer range 0 to 254;
-  signal calculation_finished : STD_LOGIC := '0';
-  signal internal_reset : STD_LOGIC := '0';
-
+  signal counter_value: integer range 0 to 255;
 begin
 
   counter: entity work.counter port map(
     reset => reset,
     clock => clock,
-    manual_reset => internal_reset,
     trigger => trigger,
-    counter_val_out => counter_state
-);
+    start_counting => msgin_valid,
+    counter_val_out => counter_value    
+    );
 
-  msgin_ready <= calculation_finished;
+
   msgout_valid <= calculation_finished;
   
-  internal_reset <= calculation_finished and msgin_valid;
-  
-  manual_reset <= internal_reset;
-  
-  event_loop: process(counter_state) -- as the counter is already handling reset and synchro,
-                      -- we dont need to do it here
+
+  event_loop: process(reset, clock)  -- as the counter is already handling reset,
+  -- we dont need to do it here
+  variable first_iter_done: std_logic := '0';
   begin
-    if counter_state = 0 then
-      write_back_resolution <= '0';
+
+    if reset = '1' then
+      msgin_ready <= '0';
+      first_iteration <= '0';
       calculation_finished <= '0';
-    elsif counter_state >= 254 then
-      write_back_resolution <= '1';
-      calculation_finished <= '1';
-    else
-      write_back_resolution <= '1';
-      calculation_finished <= '0';
+    elsif rising_edge(clock) then
+      case (counter_value) is
+        when 0 =>
+          msgin_ready <= '1';
+          first_iteration <= '0';
+          calculation_finished <= '0';
+        when 1 =>
+          msgin_ready <= '0';
+          calculation_finished <= '0';
+          
+          if first_iter_done = '0' then
+            first_iteration <= '1';
+          else
+            first_iteration <= '0';  
+          end if;
+          first_iter_done := '1';
+        when 255 =>
+          msgin_ready <= '0';
+          first_iteration <= '0';
+          calculation_finished <= '1';
+        when others =>
+          msgin_ready <= '0';
+          first_iteration <= '0';
+          calculation_finished <= '0';
+          first_iter_done := '0';
+      end case;
     end if;
-   end process;
+  end process;
 end Behavioral;
-	
