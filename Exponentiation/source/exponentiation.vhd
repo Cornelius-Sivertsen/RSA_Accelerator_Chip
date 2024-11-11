@@ -207,7 +207,8 @@ architecture expBehave_2 of exponentiation is
     signal Input_blk_1_ready : std_logic;
     signal Ready_blk_1       : std_logic;
     signal Ready_blk_2       : std_logic;
-    --FSM
+
+	--FSM
     -- signal write_back_resolution      :std_logic; --signal to first fill E and C
     -- signal valid_out_sig              :std_logic;
 
@@ -244,14 +245,18 @@ begin
        
         -- FSM : entity work.exp_fsm
         --     port map(
+		-- 		--input
         --         reset => not reset_n,
         --         clock => clk,
         --         trigger => trigger_r,
         --         msgin_valid => valid_in,
-        --         write_back_resolution => write_back_resolution,
-        --         manual_reset => manual_reset,
+		-- 		msgout_ready = > ready_out,
+
+		-- 		--output
+        --         first_iteration => condition_magique
         --         msgin_ready =>ready_in,
-        --         msgout_valid =>valid_out_sig
+        --         msgout_valid =>valid_out_sig,
+		-- 		calculation_finished => OPEN
                 
         --     );
 
@@ -289,24 +294,29 @@ begin
     result)
 
     variable trigger_var : std_logic := '0';
+	variable buffer_blk_1_done : std_logi c:= '0';
 
     begin
         
 
-        if Ready_blk_1 ='1' then            -- Check if we need to do Blackey_2
+        if Ready_blk_1 ='1' or buffer_blk_1_done ='1' then            -- Check if we need to do Blackey_2
             if E_r(255) /='1' then      
                 C_nxt <= Sortie_blk_1;      
                 trigger_var := '1';
+				buffer_blk_1_done := '0';
             elsif Ready_blk_2 ='1' then     -- Waiting for Blackley_2 to be finished
                 C_nxt <= Sortie_blk_2;
                 trigger_var := '1';
+				buffer_blk_1_done := '0';
             else 
                 C_nxt <= C_r;
                 trigger_var :='0';
+				buffer_blk_1_done <= '1';
             end if;
         else
             C_nxt <= C_r;
-            trigger_var := '0';             -- Reset trigger if Ready_blk_1 is not 1  
+			buffer_blk_1_done := '0';
+			trigger_var := '0';             -- Reset trigger if Ready_blk_1 is not 1  
         end if;
         
         trigger_nxt <= trigger_var;
@@ -341,9 +351,9 @@ begin
 
         if (valid_out_sig = '1') then
             result <= C_r;                  -- assign C_r to result when calculation done
-            ready_in <= '1';
+            --ready_in <= '1';				-- FSM gère msgin_ready
         else
-            ready_in <= '0';
+            --ready_in <= '0';
             result <= (others => '0');      --output zeros if not finished
         end if;
 
