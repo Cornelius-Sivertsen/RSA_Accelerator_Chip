@@ -22,6 +22,7 @@ architecture blackley_archi_v3 of Blackley is
     signal Reg_Mod, Reg_Mod_next : std_logic_vector(255 downto 0) := (others => '0');
     signal i, i_next : integer := 0;  -- signal i to replace the for loop
     signal R_next : std_logic_vector(255 downto 0) := (others => '0');
+    signal sent_output, sent_output_next : std_logic := '0';
 
 begin
     -- Sequential
@@ -29,7 +30,7 @@ begin
     begin
         if RESET = '1' then
             Reg_R <= (others => '0');
-            i <= 0;  -- Reset i when RESET is active
+            i <= 256;  -- Reset i when RESET is active
             Result_ready <= '0';
         elsif rising_edge(CLOCK) then
             Reg_R <= R_next;
@@ -38,16 +39,18 @@ begin
             Reg_Mod <= Reg_Mod_next;
             i <= i_next;
             Out_Blackley <= R_next;
-            if i_next = 256 and Input_Ready = '0' then
+            if i_next = 256 and Input_Ready = '0' and sent_output = '0' then
                 Result_ready <= '1';
+                sent_output <= '1';
             else
                 Result_ready <= '0';
+                sent_output <= sent_output_next;
             end if;
         end if;
     end process;
     
     -- Combinatorial
-    process(Reg_R, In_Blakley_Value1, In_Blakley_Value2, In_Blakley_Mod, Input_Ready, i, Reg_Value2, Reg_Mod, Reg_Value1)
+    process(Reg_R, In_Blakley_Value1, In_Blakley_Value2, In_Blakley_Mod, Input_Ready, i, Reg_Value2, Reg_Mod, Reg_Value1, sent_output) 
         variable shifted_R : unsigned(257 downto 0); -- 257 and not 255 because we need to add one bit for the carry
         variable modulo_R_1, modulo_R_2, shifted_mod : signed(258 downto 0); -- 258 and not 255 because we need to add one bit for the carry and one bit for the sign
         variable Reg_Value1_var, Reg_Value2_var, Reg_Mod_var, Reg_R_var : std_logic_vector(255 downto 0) := (others => '0');
@@ -60,13 +63,17 @@ begin
             Reg_Value1_next <= In_Blakley_Value1;
             Reg_Mod_next <= In_Blakley_Mod;
             Reg_R_var := (others => '0');
-            i_var := 0; 
+            i_var := 0;
+            sent_output_next <= '0';
         else 
             Reg_Value1_var := Reg_Value1;
             Reg_Value2_var := Reg_Value2;
             Reg_Mod_var := Reg_Mod;
+            Reg_Value1_next <= Reg_Value1; 
+            Reg_Mod_next <= Reg_Mod;
             Reg_R_var := Reg_R;
             i_var := i;
+            sent_output_next <= sent_output;
         end if;
 
         if i_var <= 255 then
@@ -90,7 +97,10 @@ begin
             end if;
 
             i_next <= i_var + 1;
-
+        else 
+            R_next <= Reg_R_var;
+            i_next <= i_var;
+            Reg_Value2_next <= Reg_Value2_var;
         end if;
     end process;
 
