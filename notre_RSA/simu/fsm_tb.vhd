@@ -14,17 +14,20 @@ end fsm_testbench;
 
 architecture Behavioral of fsm_testbench is
   signal res: std_logic;
-  signal man_res_top_level: std_logic;
   signal clock: std_logic := '0';
   constant period: time := 1 ns;
-  signal Done: boolean;
+  signal simu_Done: boolean;
   signal ext_trigger: std_logic := '0';
-  signal wb_resolution: std_logic;
   
-  signal msgin_valid: std_logic := '1';
   
-  signal msgin_ready: std_logic;
-  signal msgout_valid: std_logic;
+  signal msgin_valid: std_logic := '0';
+  signal msgin_ready: std_logic := '0';
+  
+  signal msgout_valid:  std_logic := '0';
+  signal msgout_ready: std_logic := '0';
+  
+  signal first_iteration: std_logic;
+  signal calculation_finished: std_logic;
 
 -- Procedure to pulse on, then off, an std_logic signal.
 -- Does not wait for a clock edge before pulsing. (asynchronous)
@@ -40,33 +43,49 @@ architecture Behavioral of fsm_testbench is
 -- Ensures that the signal is (already) on when a clock rising edge arrives.
   procedure pulse_signal_synch (signal sig: inout std_logic;
                                 signal clock: in std_logic) is
-  begin   
+  begin      
     sig <= '1';
     wait until rising_edge(clock);
-    wait for 100 ps;
+    wait for period * 3;
     sig <= '0';
+    wait for period * 6;
   end procedure;
+  
+  procedure blakley_iteration(signal sig: inout std_logic; signal clock: in std_logic) is
+  begin
+    wait for 345ps; --simulate the signal mis-aligning slightly from the clock
+    wait for period * 15; --simulate one iteration
+    
+    wait until rising_edge(clock);
+    sig <= '1';
+    wait for period * 2;
+    sig <= '0';
+    wait for period * 1;
+  end procedure;
+    
 
 
 begin
 
   DUT: entity work.exp_fsm port map(
     Reset => res,
-    manual_reset => man_res_top_level,
     Clock => clock,
     trigger => ext_trigger,
-    write_back_resolution => wb_resolution,
     msgin_valid => msgin_valid,
+    msgout_ready => msgout_ready,
     msgout_valid => msgout_valid,
-    msgin_ready => msgin_ready
+    msgin_ready => msgin_ready,
+    
+    first_iteration => first_iteration,
+    calculation_finished => calculation_finished
     );
 
-  clock <= '0' when Done else not clock after Period;
+  clock <= '0' when simu_Done else not clock after Period/2; --try dividing by two.
 
   stimuli: process
   begin
 
-    Done <= false;
+    simu_Done <= false;
     res <= '1';
     wait for 10ps;
     res <= '0';
@@ -74,64 +93,31 @@ begin
     report "Starting simulation" ;
     
     wait for period * 20;
+
+    msgin_valid <= '1';
     
-    assert ( (wb_resolution = '0') and (msgin_ready = '0'))
-      report "Start of calculation signals failing"
-      severity Failure;
-
-    wait for 325 ps;
-
-    for i in 1 to 254 loop
-      pulse_signal_synch(ext_trigger, clock);
-      wait for 300 ps;
-      
-      if i = 42 then
-        assert ( wb_resolution = '1')
-            report "write back resolution not updating"
-            severity Failure;
-        assert ( msgin_ready = '0')
-            report "Calc done updating too son"
-            severity Failure;
-            end if;
-      
+    wait on msgin_ready; msgin_valid <= '0';
+    
+    wait for period * 10;
+    wait for 432ps;
+    
+    for i in 0 to 500 loop
+    blakley_iteration(ext_trigger, clock);
     end loop;
     
-    wait for 100 ps;
-
-    assert ( msgin_ready = '1' )
-      report "fsm not detecting end of calc"
-      severity Failure;
-
-    for i in 1 to 605 loop
-      pulse_signal_synch(ext_trigger, clock);
-      wait for 300 ps;
-    end loop;
+    msgin_valid <= '1';
     
-    wait for 671 ps;
+    for i in 0 to 500 loop
+    blakley_iteration(ext_trigger, clock);
+    end loop;
     
     pulse_signal_asynch(res);
     
-    for i in 1 to 200 loop
-      pulse_signal_synch(ext_trigger, clock);
-      wait for 300 ps;
+    for i in 0 to 500 loop
+    blakley_iteration(ext_trigger, clock);
     end loop;
-    
-    wait for 123 ps;
-    
-    pulse_signal_asynch(res);
-    
-    wait for 560 ps;
-    
-    pulse_signal_asynch(res);
-    
-    for i in 1 to 200 loop
-      pulse_signal_synch(ext_trigger, clock);
-      wait for 300 ps;
-    end loop;
-    
-    
-    
-    Done <= true;
+
+    simu_Done <= true;
     report "ending simulation";
     finish;
     
