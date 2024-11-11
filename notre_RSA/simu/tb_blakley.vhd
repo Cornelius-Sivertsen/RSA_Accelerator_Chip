@@ -26,7 +26,7 @@ begin
     T_CLK <= '0' when Done else not T_CLK after Period;
     T_RST <= '0';
 
-    UUT: entity work.Blackley(blackley_archi_v1) port map (
+    UUT: entity work.Blackley(blackley_archi_v3) port map (
         CLOCK => T_CLK,
         RESET => T_RST,
         In_Blakley_Value1 => T_Blakley_Value1,
