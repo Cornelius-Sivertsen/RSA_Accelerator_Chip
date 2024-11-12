@@ -17,7 +17,7 @@ entity exp_fsm is
     first_iteration: buffer std_logic;
     msgin_ready : out STD_LOGIC;
     msgout_valid : out STD_LOGIC;
-    calculation_finished : buffer std_logic -- à voir
+    calculation_finished : buffer std_logic -- to be decided
     );
 
 end exp_fsm;
@@ -48,6 +48,7 @@ begin
       msgin_ready <= '0';
       first_iteration <= '0';
       calculation_finished <= '0';
+      first_iter_done := '0';
     elsif rising_edge(clock) then
       case (counter_value) is
         when 0 =>
