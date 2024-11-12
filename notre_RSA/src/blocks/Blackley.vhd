@@ -32,7 +32,7 @@ begin
             Reg_R <= (others => '0');
             i <= 256;  -- Reset i when RESET is active
             Result_ready <= '0';
-            sent_output <= '0';
+            sent_output <= '1';
             Reg_Value1 <= (others => '0');
             Reg_Value2 <= (others => '0');
             Reg_Mod <= (others => '0');

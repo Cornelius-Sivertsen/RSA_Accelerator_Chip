@@ -9,8 +9,8 @@ architecture behavior of tb_expBehave_2 is
     -- Déclaration des signaux
     signal clk                 : std_logic := '0';
     signal reset_n             : std_logic;
-    --signal condition_magique   : std_logic := '0';
-    --signal trigger_r           : std_logic := '0';
+    signal condition_magique   : std_logic := '0';
+    signal trigger_r           : std_logic := '0';
     signal key                 : std_logic_vector(255 downto 0) := (others => '0');
     signal message             : std_logic_vector(255 downto 0) := (others => '0');
     signal modulus             : std_logic_vector(255 downto 0) := (others => '0');
@@ -46,8 +46,8 @@ begin
         port map (
             clk             => clk,
             reset_n         => reset_n,
-            --condition_magique => condition_magique,
-            --trigger_r       => trigger_r,
+            condition_magique => condition_magique,
+            trigger_r       => trigger_r,
             key             => key,
             message         => message,
             modulus         => modulus,
@@ -92,7 +92,7 @@ begin
         
         -- Cas de test : Activer condition_magique
         condition_magique <= '1';
-        key <=     X"0000000000000000000000000000000000000000000000000000000000110101";
+        key <=     X"F000000000000000000000000000000000000000000000000000000000110101";
         message <= X"0000000000000000000000000000000000000000000000000000000000110000";
         modulus <= X"CCFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFCC";
         

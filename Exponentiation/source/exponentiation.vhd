@@ -9,8 +9,8 @@ entity exponentiation is
 		--input controll
 		valid_in	: in STD_LOGIC; --msgin_valid
 		ready_in	: out STD_LOGIC; -- msgin_ready
-        condition_magique : in std_logic;
-        trigger_r   : out std_logic;
+        --condition_magique : in std_logic;
+        --trigger_r   : out std_logic;
 		--input data
 		message 	: in STD_LOGIC_VECTOR ( C_block_size-1 downto 0 ); --msgin_data
 		key 		: in STD_LOGIC_VECTOR ( C_block_size-1 downto 0 ); --key_e
@@ -218,7 +218,7 @@ architecture expBehave_2 of exponentiation is
 
 
 begin
-    BLACKLEY_1 : entity work.Blackley(blackley_archi_v2)
+    BLACKLEY_1 : entity work.Blackley(blackley_archi_v3)
             port map (
 
                 RESET                       => not reset_n  ,
@@ -230,7 +230,7 @@ begin
                 Out_Blackley                => Sortie_blk_1 ,
                 Result_ready                => Ready_blk_1
             );
-        BLACKLEY_2 : entity work.Blackley(blackley_archi_v2)
+        BLACKLEY_2 : entity work.Blackley(blackley_archi_v3)
             port map (
 
                 RESET                       => not reset_n  ,
@@ -243,22 +243,22 @@ begin
                 Result_ready                => Ready_blk_2 
             );
        
-        -- FSM : entity work.exp_fsm
-        --     port map(
-		-- 		--input
-        --         reset => not reset_n,
-        --         clock => clk,
-        --         trigger => trigger_r,
-        --         msgin_valid => valid_in,
-		-- 		msgout_ready = > ready_out,
+        FSM : entity work.exp_fsm
+            port map(
+				--input
+                reset => not reset_n,
+                clock => clk,
+                trigger => trigger_r,
+                msgin_valid => valid_in,
+				msgout_ready = > ready_out,
 
-		-- 		--output
-        --         first_iteration => condition_magique
-        --         msgin_ready =>ready_in,
-        --         msgout_valid =>valid_out_sig,
-		-- 		calculation_finished => OPEN
+				--output
+                first_iteration => condition_magique
+                msgin_ready =>ready_in,
+                msgout_valid =>valid_out_sig,
+				calculation_finished => OPEN
                 
-        --     );
+            );
 
         -- process des registres
     process (clk, reset_n)
@@ -294,7 +294,7 @@ begin
     result)
 
     variable trigger_var : std_logic := '0';
-	variable buffer_blk_1_done : std_logi c:= '0';
+	variable buffer_blk_1_done : std_logic:= '0';
 
     begin
         
@@ -311,7 +311,7 @@ begin
             else 
                 C_nxt <= C_r;
                 trigger_var :='0';
-				buffer_blk_1_done <= '1';
+				buffer_blk_1_done := '1';
             end if;
         else
             C_nxt <= C_r;
