@@ -52,7 +52,7 @@ end exponentiation;
 --     signal Ready_blk_1      :std_logic;
 --     signal Ready_blk_2      :std_logic;
 
---     signal valid_out_sig    :std_logic;
+--     signal calculation_finished    :std_logic;
     
 -- 	--register shift-left
 -- 	signal trig_first_time_only : std_logic; --to shift left the exponent
@@ -118,7 +118,7 @@ end exponentiation;
 --                 write_back_resolution => write_back_resolution,
 --                 manual_reset => manual_reset,
 --                 msgin_ready =>ready_in,
---                 msgout_valid =>valid_out_sig
+--                 msgout_valid =>calculation_finished
                 
 --             );
 
@@ -166,7 +166,7 @@ end exponentiation;
 --                 end if;
                 
 --                 trigger_reg_sig <= trigger_r;
---                 valid_out_var := valid_out_sig;
+--                 valid_out_var := calculation_finished;
 
 -- 				if trigger_r = '1' then
 --                     C_r <= C_nxt;                    --update C_r with new calculated value
@@ -197,8 +197,8 @@ architecture expBehave_2 of exponentiation is
     signal C_nxt            : std_logic_vector(C_block_size-1 downto 0);
     signal trigger_nxt : std_logic;
     signal trigger_r: std_logic;
-
     signal Input_blk_1_ready_nxt: std_logic;
+    signal result_r, result_r_nxt : std_logic_vector(C_block_size-1 downto 0);
 
     -- Blakely signals
     signal Sortie_blk_1     : std_logic_vector(C_block_size-1 downto 0);
@@ -210,13 +210,17 @@ architecture expBehave_2 of exponentiation is
 
 	--FSM
     -- signal write_back_resolution      :std_logic; --signal to first fill E and C
-    -- signal valid_out_sig              :std_logic;
+    -- signal calculation_finished              :std_logic;
 
     --signal de test sans FSM
     signal condition_magique    : std_logic;
-    signal valid_out_sig        : std_logic;
+    signal calculation_finished        : std_logic;
 
-
+    --signal de testbench
+    signal TEST_VAR         :  std_logic;
+    signal test_if          : std_logic;
+    signal buffer_blk_1     :std_logic;
+    signal buffer_blk_1_nxt: std_logic;
 begin
     BLACKLEY_1 : entity work.Blackley(blackley_archi_v3)
             port map (
@@ -255,10 +259,12 @@ begin
 				--output
                 first_iteration => condition_magique,
                 msgin_ready => ready_in,
-                msgout_valid => valid_out_sig,
-				calculation_finished => OPEN
+                msgout_valid => valid_out,
+				calculation_finished => calculation_finished
                 
             );
+
+        
 
         -- process des registres
     process (clk, reset_n)
@@ -268,11 +274,15 @@ begin
             E_r <= (others => '0');
             trigger_r <= '0';
             Input_blk_1_ready <= '0';
+            result_r <= (others => '0');
+
         elsif rising_edge (clk) then
             trigger_r <= trigger_nxt;
             C_r <= C_nxt;
             E_r <= E_nxt;
+            result_r <= result_r_nxt;
             Input_blk_1_ready <= Input_blk_1_ready_nxt;
+            buffer_blk_1 <= buffer_blk_1_nxt;
         end if;
     end process;
 
@@ -282,45 +292,45 @@ begin
     message,
     Input_blk_1_ready_nxt,
     E_r,
-    E_nxt,
     C_r,
-    C_nxt,
     Ready_blk_1,
     Ready_blk_2,
     Sortie_blk_1,
     Sortie_blk_2,
     trigger_nxt,
-    valid_out_sig,
+    calculation_finished,
     result)
 
     variable trigger_var : std_logic := '0';
-	variable buffer_blk_1_done : std_logic:= '0';
 
     begin
         
+        C_nxt <= C_r;
 
-        if Ready_blk_1 ='1' or buffer_blk_1_done ='1' then            -- Check if we need to do Blackey_2
+        if Ready_blk_1 ='1' or buffer_blk_1 ='1' then            -- Check if we need to do Blackey_2
             if E_r(255) /='1' then      
                 C_nxt <= Sortie_blk_1;      
                 trigger_var := '1';
-				buffer_blk_1_done := '0';
+				buffer_blk_1_nxt <= '0';
+				test_if <= '0';
             elsif Ready_blk_2 ='1' then     -- Waiting for Blackley_2 to be finished
                 C_nxt <= Sortie_blk_2;
                 trigger_var := '1';
-				buffer_blk_1_done := '0';
+				buffer_blk_1_nxt <= '0';
+				test_if <= '1';
             else 
-                C_nxt <= C_r;
                 trigger_var :='0';
-				buffer_blk_1_done := '1';
+				test_if <= '0';
+				buffer_blk_1_nxt <= '1';
             end if;
         else
-            C_nxt <= C_r;
-			buffer_blk_1_done := '0';
-			trigger_var := '0';             -- Reset trigger if Ready_blk_1 is not 1  
+			buffer_blk_1_nxt <= '0';
+			trigger_var := '0';
+			test_if <= '0';             -- Reset trigger if Ready_blk_1 is not 1  
         end if;
         
         trigger_nxt <= trigger_var;
-
+       
         -- voir la condition du if avec Cornelius
         if condition_magique ='1' then
             if key(255) = '1' then -- ou mettre la condition dans ce if
@@ -334,11 +344,9 @@ begin
             E_nxt <= key(254 downto 0 ) & '0'; -- stockage en shift left de l'exposant
         elsif trigger_var='1' then -- voir la condition pour pas shift left tout le temps 
             E_nxt <= E_r(254 downto 0 ) & '0';
-            C_nxt <= C_nxt;
             Input_blk_1_ready_nxt  <= '1';
         else 
             E_nxt <= E_r;
-            C_nxt <= C_r;
             Input_blk_1_ready_nxt  <= '0';
         end if;
 
@@ -348,13 +356,12 @@ begin
         --     Input_blk_1_ready_nxt <= '0'; -- Not ready
         -- end if;
 
-
-        if (valid_out_sig = '1') then
-            result <= C_r;                  -- assign C_r to result when calculation done
+        if (calculation_finished = '1') then
+            result_r_nxt <= C_r;                  -- assign C_r to result when calculation done
             --ready_in <= '1';				-- FSM gère msgin_ready
         else
             --ready_in <= '0';
-            result <= (others => '0');      --output zeros if not finished
+            result_r_nxt <= result_r;--output zeros if not finished
         end if;
 
     end process;
