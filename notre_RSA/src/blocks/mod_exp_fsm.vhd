@@ -24,7 +24,7 @@ end exp_fsm;
 
 architecture Behavioral of exp_fsm is
 
-  signal counter_value: integer range 0 to 255;
+  signal counter_value: integer range 0 to 256;
 begin
 
   counter: entity work.counter port map(
@@ -34,9 +34,14 @@ begin
     start_counting => msgin_valid,
     counter_val_out => counter_value    
     );
-
-
-  msgout_valid <= calculation_finished;
+    
+    VR_handshake: entity work.VRH port map(
+    done => calculation_finished,
+    ready => msgout_ready,
+    reset => reset,
+    clk => clock,
+    valid => msgout_valid  
+    );
   
 
   event_loop: process(reset, clock)  -- as the counter is already handling reset,
@@ -71,7 +76,7 @@ begin
             first_iteration <= '0';  
           end if;
           first_iter_done := '1';
-        when 255 =>
+        when 256 =>
           msgin_ready <= '0';
           first_iteration <= '0';
           calculation_finished <= '1';
