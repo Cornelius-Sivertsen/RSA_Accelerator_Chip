@@ -51,10 +51,16 @@ begin
       first_iter_done := '0';
     elsif rising_edge(clock) then
       case (counter_value) is
-        when 0 =>
-          msgin_ready <= '1';
+        when 0 =>  
           first_iteration <= '0';
           calculation_finished <= '0';
+          
+          if msgin_valid = '1' then
+            msgin_ready <= '0';
+          else
+            msgin_ready <= '1';
+          end if;
+          
         when 1 =>
           msgin_ready <= '0';
           calculation_finished <= '0';
