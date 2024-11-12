@@ -196,7 +196,7 @@ architecture expBehave_2 of exponentiation is
     signal E_nxt            : std_logic_vector(C_block_size-1 downto 0);
     signal C_nxt            : std_logic_vector(C_block_size-1 downto 0);
     signal trigger_nxt : std_logic;
-    --signal trigger_r: std_logic;
+    signal trigger_r: std_logic;
 
     signal Input_blk_1_ready_nxt: std_logic;
 
@@ -213,7 +213,7 @@ architecture expBehave_2 of exponentiation is
     -- signal valid_out_sig              :std_logic;
 
     --signal de test sans FSM
-    --signal condition_magique    : std_logic;
+    signal condition_magique    : std_logic;
     signal valid_out_sig        : std_logic;
 
 
@@ -250,12 +250,12 @@ begin
                 clock => clk,
                 trigger => trigger_r,
                 msgin_valid => valid_in,
-				msgout_ready = > ready_out,
+				msgout_ready => ready_out,
 
 				--output
-                first_iteration => condition_magique
-                msgin_ready =>ready_in,
-                msgout_valid =>valid_out_sig,
+                first_iteration => condition_magique,
+                msgin_ready => ready_in,
+                msgout_valid => valid_out_sig,
 				calculation_finished => OPEN
                 
             );
