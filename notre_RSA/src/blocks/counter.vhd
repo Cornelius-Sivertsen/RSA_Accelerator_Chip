@@ -1,7 +1,7 @@
 --Counts rising edges on "trigger".
---Counts from 0-255.
+--Counts from 0-256.
 --Idles at 0.
---While at 255, goes back to 0 at next clock cycle.
+--While at 256, goes back to 0 at next clock cycle.
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -20,7 +20,7 @@ entity counter is
          Clock : in STD_LOGIC;
          Trigger : in STD_LOGIC;
          start_counting : in STD_Logic;
-         Counter_val_out : out integer range 0 to 255
+         Counter_val_out : out integer range 0 to 256
          );
 end counter;
 
@@ -31,7 +31,7 @@ begin
   process(Clock, Reset)
     variable prev_trigger: std_logic := '0';  -- Used for rising edge detection
     variable trigger_edge: std_logic;  -- Used for rising edge detection
-    variable internal_counter_val: integer range 0 to 255;
+    variable internal_counter_val: integer range 0 to 256;
   begin
   
     
@@ -48,10 +48,10 @@ begin
        else
            internal_counter_val := internal_counter_val; -- do nothing 
        end if;     
-      elsif (internal_counter_val < 255 and
+      elsif (internal_counter_val < 256 and
              trigger_edge = '1') then
         internal_counter_val := internal_counter_val + 1;
-      elsif internal_counter_val = 255 then
+      elsif internal_counter_val = 256 then
         internal_counter_val := 0;
       else
         internal_counter_val := internal_counter_val; -- do nothing
