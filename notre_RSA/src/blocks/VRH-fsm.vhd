@@ -52,9 +52,12 @@ begin
         end if;
 
       when s_ephemeral =>
-        valid <= '1';
-
-        next_state <= s_quick_reset;
+        if ready = '1' then
+          valid <= '1';  -- msgout_valid est activé pour un cycle lorsque msgout_ready est à '1'
+          next_state <= s_quick_reset;
+        else
+          next_state <= s_ephemeral;
+        end if;
 
       when s_quick_reset =>
         valid <= '0';
@@ -73,7 +76,6 @@ begin
         next_state <= s_idle;
     end case;
   end process Comb_part;
-
 
   Seq_comp : process (reset, next_state, clk)
   begin

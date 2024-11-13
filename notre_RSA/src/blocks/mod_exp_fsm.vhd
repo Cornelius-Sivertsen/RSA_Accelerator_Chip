@@ -59,17 +59,17 @@ begin
         when 0 =>  
           first_iteration <= '0';
           calculation_finished <= '0';
-          
           if msgin_valid = '1' then
-            msgin_ready <= '0';
-          else
             msgin_ready <= '1';
+          else
+            msgin_ready <= '0';
           end if;
           
-        when 1 =>
-          msgin_ready <= '0';
-          calculation_finished <= '0';
           
+        when 1 =>
+          --msgin_ready <= '0';
+          calculation_finished <= '0';
+          msgin_ready <= '0';
           if first_iter_done = '0' then
             first_iteration <= '1';
           else
