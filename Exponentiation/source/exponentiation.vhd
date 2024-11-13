@@ -8,7 +8,7 @@ entity exponentiation is
 	port (
 		--input controll
 		valid_in	: in STD_LOGIC; --msgin_valid
-		ready_in	: out STD_LOGIC; -- msgin_ready
+		ready_in	: buffer STD_LOGIC; -- msgin_ready
         --condition_magique : in std_logic;
         --trigger_r   : out std_logic;
 		--input data
@@ -199,6 +199,7 @@ architecture expBehave_2 of exponentiation is
     signal trigger_r: std_logic;
     signal Input_blk_1_ready_nxt: std_logic;
     signal result_r, result_r_nxt : std_logic_vector(C_block_size-1 downto 0);
+    signal register_enter, register_enter_nxt : std_logic_vector(C_block_size-1 downto 0);
 
     -- Blakely signals
     signal Sortie_blk_1     : std_logic_vector(C_block_size-1 downto 0);
@@ -240,7 +241,7 @@ begin
                 RESET                       => not reset_n  ,
                 CLOCK                       => clk      ,
                 In_Blakley_Value1           => Sortie_blk_1 ,
-                In_Blakley_Value2           => message      ,
+                In_Blakley_Value2           => register_enter  ,
                 In_Blakley_Mod              => modulus      ,
                 Input_Ready                 => Ready_blk_1 and E_r(255),
                 Out_Blackley                => Sortie_blk_2,
@@ -275,7 +276,7 @@ begin
             trigger_r <= '0';
             Input_blk_1_ready <= '0';
             result_r <= (others => '0');
-
+            register_enter <= (others => '0');
         elsif rising_edge (clk) then
             trigger_r <= trigger_nxt;
             C_r <= C_nxt;
@@ -283,11 +284,13 @@ begin
             result_r <= result_r_nxt;
             Input_blk_1_ready <= Input_blk_1_ready_nxt;
             buffer_blk_1 <= buffer_blk_1_nxt;
+            register_enter <= register_enter_nxt;
         end if;
     end process;
 
     process (condition_magique,
     ready_in,
+    valid_in,
     key,
     message,
     Input_blk_1_ready_nxt,
@@ -299,6 +302,7 @@ begin
     Sortie_blk_2,
     trigger_nxt,
     calculation_finished,
+    register_enter,
     result)
 
     variable trigger_var : std_logic := '0';
@@ -306,7 +310,12 @@ begin
     begin
         
         C_nxt <= C_r;
-
+        if valid_in ='1' and ready_in ='1' then
+            register_enter_nxt <= message;
+        else 
+            register_enter_nxt <= register_enter;
+        end if;
+        
         if Ready_blk_1 ='1' or buffer_blk_1 ='1' then            -- Check if we need to do Blackey_2
             if E_r(255) /='1' then      
                 C_nxt <= Sortie_blk_1;      
@@ -334,7 +343,7 @@ begin
         -- voir la condition du if avec Cornelius
         if condition_magique ='1' then
             if key(255) = '1' then -- ou mettre la condition dans ce if
-                C_nxt <= message; --update C_r with the message value
+                C_nxt <= register_enter; --update C_r with the message value
                 --C_nxt <= (255 downto 1 => '0') & '1';   -- TEST      
             else 
                 C_nxt <= (255 downto 1 => '0') & '1';     -- if the signal is out of the fsm only the 1st time or not changes everything
@@ -355,15 +364,16 @@ begin
         -- else
         --     Input_blk_1_ready_nxt <= '0'; -- Not ready
         -- end if;
-
+        result <= result_r;
         if (calculation_finished = '1') then
             result_r_nxt <= C_r;                  -- assign C_r to result when calculation done
+            result <= C_r;
             --ready_in <= '1';				-- FSM gère msgin_ready
         else
             --ready_in <= '0';
-            result_r_nxt <= result_r;--output zeros if not finished
+            result_r_nxt <= result_r; --output zeros if not finished
         end if;
-
+        
     end process;
 
     -- c'est quoi ces trucs ?
