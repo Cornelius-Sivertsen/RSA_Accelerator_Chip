@@ -35,7 +35,7 @@ begin
     counter_val_out => counter_value    
     );
     
-    VR_handshake: entity work.VRH port map(
+    VR_handshake: entity work.VRH(out_handshake_v2) port map(
     done => calculation_finished,
     ready => msgout_ready,
     reset => reset,
