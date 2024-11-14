@@ -33,7 +33,7 @@ begin
 
       when s_done_not_ready =>
         valid <= '1';
-
+        
         if ready = '0' then
           next_state <= s_done_not_ready;
         elsif done = '1' then
@@ -52,13 +52,19 @@ begin
         end if;
 
       when s_ephemeral =>
-        if ready = '1' then
-          valid <= '1';  -- msgout_valid est activé pour un cycle lorsque msgout_ready est à '1'
-          next_state <= s_quick_reset;
-        else
-          next_state <= s_ephemeral;
-        end if;
-
+        
+        
+        if ready='1' then
+            valid <= '1';
+            next_state <= s_quick_reset;
+        else 
+            valid<='0';
+            next_state <= s_ephemeral;
+        end if ;
+        
+        
+        
+        
       when s_quick_reset =>
         valid <= '0';
 
@@ -81,7 +87,7 @@ begin
   begin
     if (reset = '1') then
       current_state <= s_idle;
-    elsif rising_edge(clk) then
+    elsif rising_edge (clk) then 
       current_state <= next_state;
     end if;
   end process Seq_comp;

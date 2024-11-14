@@ -21,6 +21,8 @@ entity exponentiation is
 
 		--output data
 		result 		: out STD_LOGIC_VECTOR(C_block_size-1 downto 0); --msgout_data
+		
+		calculation_finished_output : out STD_LOGIC ; 
 
 		--modulus
 		modulus 	: in STD_LOGIC_VECTOR(C_block_size-1 downto 0); --key_n
@@ -241,7 +243,7 @@ begin
                 RESET                       => not reset_n  ,
                 CLOCK                       => clk      ,
                 In_Blakley_Value1           => Sortie_blk_1 ,
-                In_Blakley_Value2           => register_enter  ,
+                In_Blakley_Value2           =>register_enter  ,
                 In_Blakley_Mod              => modulus      ,
                 Input_Ready                 => Ready_blk_1 and E_r(255),
                 Out_Blackley                => Sortie_blk_2,
@@ -288,6 +290,9 @@ begin
         end if;
     end process;
 
+
+    calculation_finished_output <= calculation_finished;
+    
     process (condition_magique,
     ready_in,
     valid_in,
@@ -308,13 +313,12 @@ begin
     variable trigger_var : std_logic := '0';
 
     begin
-        
         C_nxt <= C_r;
-        if valid_in ='1' and ready_in ='1' then
-            register_enter_nxt <= message;
-        else 
-            register_enter_nxt <= register_enter;
-        end if;
+         if valid_in ='1' and ready_in ='1' then
+             register_enter_nxt <= message;
+         else 
+             register_enter_nxt <= register_enter;
+         end if;
         
         if Ready_blk_1 ='1' or buffer_blk_1 ='1' then            -- Check if we need to do Blackey_2
             if E_r(255) /='1' then      

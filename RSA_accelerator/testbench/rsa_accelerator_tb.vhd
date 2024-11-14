@@ -496,7 +496,7 @@ begin
 			msgout_ready   <= '0';
 			msgout_counter <= (others => '0');
 
-		elsif (clk'event and clk='1') then
+		elsif (rising_edge(clk)) then
             
 			-- Default values
 			all_output_messages_received <= '0';

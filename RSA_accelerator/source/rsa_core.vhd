@@ -67,6 +67,17 @@ end rsa_core;
 
 architecture rtl of rsa_core is
 
+-- signal int_reg : std_logic := '0';
+signal calculation_finished_sig : std_logic;
+--signal msgout_valid_sig : std_logic; 
+
+signal msgout_sig :std_logic;
+
+signal ready_in_prev, ready_in : std_logic :='0';
+signal register_shift : std_logic_vector (2 downto 0) := "000";
+signal pick_value_sig : std_logic:= '0';
+
+
 begin
 	i_exponentiation : entity work.exponentiation
 		generic map (
@@ -76,15 +87,63 @@ begin
 			message   => msgin_data  ,
 			key       => key_e_d     ,
 			valid_in  => msgin_valid ,
-			ready_in  => msgin_ready ,
+			ready_in  => ready_in,--msgin_ready ,
 			ready_out => msgout_ready,
-			valid_out => msgout_valid,
+			valid_out => msgout_valid,--msgout_valid,
 			result    => msgout_data ,
+			calculation_finished_output => calculation_finished_sig,
 			modulus   => key_n       ,
 			clk       => clk         ,
 			reset_n   => reset_n
 		);
+	
+	--msgout_valid <= msgout_valid_sig;
+    -- process (msgout_valid_sig)
+    -- begin
+    --     if msgout_valid_sig = '1' then
+    --         int_reg <= msgin_last;
+    --     else
+    --         int_reg <= int_reg;
+    --     end if; 
+    --     msgout_last <= int_reg and msgout_valid_sig;
+    -- end process;
+	msgout_last <= msgout_sig ;
+	msgin_ready <= ready_in ;
+    process (
+		ready_in,
+		msgin_valid,
+		calculation_finished_sig
+	)
+	
 
-	msgout_last  <= msgin_last;
+	variable pick_value_var : std_logic := '0';
+	--signal int_reg :std_logic :='0';
+    begin
+		--int_reg <= int_reg;
+		if calculation_finished_sig = '1' then
+			msgout_sig <= register_shift(1);
+			register_shift <= '0' & register_shift(2 downto 1);
+		end if;
+
+		if ready_in_prev /= ready_in then
+			ready_in_prev <= ready_in;
+		end if;
+
+		if ready_in_prev = '1' and ready_in ='0' then 
+			pick_value_var := '1';
+		else
+			pick_value_var :=pick_value_sig;
+		end if;
+
+		if (msgin_valid ='1' and pick_value_var ='1') or (msgin_valid ='1' and pick_value_sig ='1') then
+			register_shift(2) <= msgin_last;
+			pick_value_var := '0';
+		end if;
+		pick_value_sig <= pick_value_var;
+		
+	end process;
+    
+    
 	rsa_status   <= (others => '0');
+	
 end rtl;
