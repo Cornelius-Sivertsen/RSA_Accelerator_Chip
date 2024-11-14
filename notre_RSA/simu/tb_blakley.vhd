@@ -24,7 +24,7 @@ architecture TEST of test_tb_blakley is
 begin
 
     T_CLK <= '0' when Done else not T_CLK after Period;
-    T_RST <= '0';
+    --T_RST <= '0';
 
     UUT: entity work.Blackley(blackley_archi_v3) port map (
         CLOCK => T_CLK,
@@ -43,6 +43,10 @@ begin
     begin
         Done <= false;
 
+        T_RST <= '1';
+        wait for 200 ns;
+        T_RST <= '0';
+        
         -- Test Case 1 a: Simple case
         T_Blakley_Value1 <= X"0000000000000000000000000000000000000000000000000000000000000000";
         T_Blakley_Value2 <= X"0000000000000000000000000000000000000000000000000000000000000000";
@@ -51,14 +55,24 @@ begin
         wait for 2 ns;
         T_InReady <= '0';
         wait until T_Outready = '1';
-        assert T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000000" report "Test Case 1 Failed" severity warning;
+        assert T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000000" report "Test Case 1a Failed" severity warning;
         OK <= T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000000";
         ok_v := T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000000";
         expected_result <= X"0000000000000000000000000000000000000000000000000000000000000000";
         OK_general <= OK_general and ok_v;
-        wait for 4 ns;
+        wait for 4000 ns;
+        
+        assert T_Outready = '0' report "Signal Blakley OutReady suppose to be up only 1 cycle" severity warning;
+        ok_v := T_Outready = '0';
+        OK <= ok_v;
+        OK_general <= OK_general and ok_v;
+        
+        T_RST <= '1';
+        wait for 2 ns;
+        T_RST <= '0';
+        wait for 200 ns;
 
-        -- Test Case 1 b: Simple case
+-- Test Case 1 b: Simple case
         T_Blakley_Value1 <= X"0000000000000000000000000000000000000000000000000000000000000001";
         T_Blakley_Value2 <= X"0000000000000000000000000000000000000000000000000000000000000001";
         T_Blakley_Mod <= (others => '1');
@@ -66,7 +80,7 @@ begin
         wait for 2 ns;
         T_InReady <= '0';
         wait until T_Outready = '1';
-        assert T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000001" report "Test Case 1 Failed" severity warning;
+        assert T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000001" report "Test Case 1b Failed" severity warning;
         expected_result <= X"0000000000000000000000000000000000000000000000000000000000000001";
         OK <= T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000001";
         ok_v := T_OutBlackley = X"0000000000000000000000000000000000000000000000000000000000000001";
