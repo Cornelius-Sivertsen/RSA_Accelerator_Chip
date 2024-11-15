@@ -75,7 +75,7 @@ signal msgout_sig :std_logic;
 
 signal ready_in_prev, ready_in : std_logic :='0';
 signal register_shift : std_logic_vector (2 downto 0) := "000";
-signal pick_value_sig : std_logic:= '0';
+signal pick_value_sig, give_value, deja_fait : std_logic:= '0';
 
 
 begin
@@ -112,35 +112,55 @@ begin
     process (
 		ready_in,
 		msgin_valid,
-		calculation_finished_sig
+		calculation_finished_sig,
+		msgout_valid,
+		msgout_ready
 	)
 	
 
-	variable pick_value_var : std_logic := '0';
+	--variable pick_value_var : std_logic := '0';
 	--signal int_reg :std_logic :='0';
     begin
-		--int_reg <= int_reg;
+		-- --int_reg <= int_reg;
+		-- if calculation_finished_sig = '1' then
+		-- 	msgout_sig <= register_shift(1);
+		-- 	register_shift <= '0' & register_shift(2 downto 1);
+		-- end if;
+
+		-- if ready_in_prev /= ready_in then
+		-- 	ready_in_prev <= ready_in;
+		-- end if;
+
+		-- if ready_in_prev = '1' and ready_in ='0' then 
+		-- 	pick_value_var := '1';
+		-- else
+		-- 	pick_value_var :=pick_value_sig;
+		-- end if;
+
+		-- if (msgin_valid ='1' and pick_value_var ='1') or (msgin_valid ='1' and pick_value_sig ='1') then
+		-- 	register_shift(2) <= msgin_last;
+		-- 	pick_value_var := '0';
+		-- end if;
+		-- pick_value_sig <= pick_value_var;
+		if ready_in = '1' and msgin_valid = '1' and deja_fait ='0' then
+			pick_value_sig <= msgin_last;
+			deja_fait <= '1';
+		else 
+			pick_value_sig <= pick_value_sig;
+			deja_fait <= '0';
+		end if;
+
 		if calculation_finished_sig = '1' then
-			msgout_sig <= register_shift(1);
-			register_shift <= '0' & register_shift(2 downto 1);
+			give_value <= pick_value_sig;
+		else 
+			give_value <= give_value;
 		end if;
 
-		if ready_in_prev /= ready_in then
-			ready_in_prev <= ready_in;
-		end if;
-
-		if ready_in_prev = '1' and ready_in ='0' then 
-			pick_value_var := '1';
+		if msgout_valid = '1' and msgout_ready ='1' then
+			msgout_sig <= give_value;
 		else
-			pick_value_var :=pick_value_sig;
+			msgout_sig <= '0';
 		end if;
-
-		if (msgin_valid ='1' and pick_value_var ='1') or (msgin_valid ='1' and pick_value_sig ='1') then
-			register_shift(2) <= msgin_last;
-			pick_value_var := '0';
-		end if;
-		pick_value_sig <= pick_value_var;
-		
 	end process;
     
     
