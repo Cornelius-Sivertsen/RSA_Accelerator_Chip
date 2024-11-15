@@ -72,7 +72,7 @@ signal calculation_finished_sig : std_logic;
 signal msgout_sig :std_logic;
 
 signal ready_in : std_logic :='0';
-signal pick_value_sig, give_value, deja_fait  : std_logic:= '0';
+signal pick_value_sig, pick_value_sig_nxt, give_value,give_value_nxt, deja_fait  : std_logic:= '0';
 
 
 begin
@@ -97,6 +97,22 @@ begin
 	
 	msgout_last <= msgout_sig ;
 	msgin_ready <= ready_in ;
+
+	process (
+		clk,
+		reset_n
+	)
+
+    begin
+		if reset_n = '0' then
+			pick_value_sig <= '0';
+			give_value <= '0';
+		elsif rising_edge(clk) then
+			pick_value_sig <= pick_value_sig_nxt;
+			give_value <= give_value_nxt;
+		end if;
+	end process;
+
     process (
 		ready_in,
 		msgin_valid,
@@ -107,12 +123,12 @@ begin
 
     begin
 
-		pick_value_sig <= pick_value_sig;
-    	give_value <= give_value;
+		pick_value_sig_nxt <= pick_value_sig;
+    	give_value_nxt <= give_value;
     	msgout_sig <= '0';
 		
 		if ready_in = '1' and msgin_valid = '1' and deja_fait ='0' then
-			pick_value_sig <= msgin_last;
+			pick_value_sig_nxt <= msgin_last;
 			deja_fait <= '1';
 		else 
 			--pick_value_sig <= pick_value_sig;
@@ -120,7 +136,7 @@ begin
 		end if;
 
 		if calculation_finished_sig = '1' then
-			give_value <= pick_value_sig;
+			give_value_nxt <= pick_value_sig;
 		-- else 
 		-- 	give_value <= give_value;
 		end if;
