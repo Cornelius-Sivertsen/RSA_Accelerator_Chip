@@ -72,7 +72,7 @@ signal calculation_finished_sig : std_logic;
 signal msgout_sig :std_logic;
 
 signal ready_in : std_logic :='0';
-signal pick_value_sig, pick_value_sig_nxt, give_value, give_value_nxt, deja_fait  : std_logic:= '0';
+signal pick_value_sig, give_value, deja_fait  : std_logic:= '0';
 
 
 begin
@@ -106,29 +106,32 @@ begin
 	)
 
     begin
+
+		pick_value_sig <= pick_value_sig;
+    	give_value <= give_value;
+    	msgout_sig <= '0';
 		
 		if ready_in = '1' and msgin_valid = '1' and deja_fait ='0' then
-			pick_value_sig_nxt <= msgin_last;
+			pick_value_sig <= msgin_last;
 			deja_fait <= '1';
 		else 
-			pick_value_sig_nxt <= pick_value_sig;
+			--pick_value_sig <= pick_value_sig;
 			deja_fait <= '0';
 		end if;
 
 		if calculation_finished_sig = '1' then
-			give_value_nxt <= pick_value_sig;
-		else 
-			give_value_nxt <= give_value;
+			give_value <= pick_value_sig;
+		-- else 
+		-- 	give_value <= give_value;
 		end if;
 
 		if msgout_valid = '1' and msgout_ready ='1' then
 			msgout_sig <= give_value;
-		else
-			msgout_sig <= '0';
+		-- else
+		-- 	msgout_sig <= '0';
 		end if;
 	end process;
-    pick_value_sig <= pick_value_sig_nxt;
-	give_value <= give_value_nxt;
+    
     
 	rsa_status   <= (others => '0');
 	
