@@ -67,15 +67,12 @@ end rsa_core;
 
 architecture rtl of rsa_core is
 
--- signal int_reg : std_logic := '0';
 signal calculation_finished_sig : std_logic;
---signal msgout_valid_sig : std_logic; 
 
 signal msgout_sig :std_logic;
 
-signal ready_in_prev, ready_in : std_logic :='0';
-signal register_shift : std_logic_vector (2 downto 0) := "000";
-signal pick_value_sig, give_value, deja_fait : std_logic:= '0';
+signal ready_in : std_logic :='0';
+signal pick_value_sig, pick_value_sig_nxt, give_value, give_value_nxt, deja_fait  : std_logic:= '0';
 
 
 begin
@@ -97,16 +94,7 @@ begin
 			reset_n   => reset_n
 		);
 	
-	--msgout_valid <= msgout_valid_sig;
-    -- process (msgout_valid_sig)
-    -- begin
-    --     if msgout_valid_sig = '1' then
-    --         int_reg <= msgin_last;
-    --     else
-    --         int_reg <= int_reg;
-    --     end if; 
-    --     msgout_last <= int_reg and msgout_valid_sig;
-    -- end process;
+	
 	msgout_last <= msgout_sig ;
 	msgin_ready <= ready_in ;
     process (
@@ -116,44 +104,21 @@ begin
 		msgout_valid,
 		msgout_ready
 	)
-	
 
-	--variable pick_value_var : std_logic := '0';
-	--signal int_reg :std_logic :='0';
     begin
-		-- --int_reg <= int_reg;
-		-- if calculation_finished_sig = '1' then
-		-- 	msgout_sig <= register_shift(1);
-		-- 	register_shift <= '0' & register_shift(2 downto 1);
-		-- end if;
-
-		-- if ready_in_prev /= ready_in then
-		-- 	ready_in_prev <= ready_in;
-		-- end if;
-
-		-- if ready_in_prev = '1' and ready_in ='0' then 
-		-- 	pick_value_var := '1';
-		-- else
-		-- 	pick_value_var :=pick_value_sig;
-		-- end if;
-
-		-- if (msgin_valid ='1' and pick_value_var ='1') or (msgin_valid ='1' and pick_value_sig ='1') then
-		-- 	register_shift(2) <= msgin_last;
-		-- 	pick_value_var := '0';
-		-- end if;
-		-- pick_value_sig <= pick_value_var;
+		
 		if ready_in = '1' and msgin_valid = '1' and deja_fait ='0' then
-			pick_value_sig <= msgin_last;
+			pick_value_sig_nxt <= msgin_last;
 			deja_fait <= '1';
 		else 
-			pick_value_sig <= pick_value_sig;
+			pick_value_sig_nxt <= pick_value_sig;
 			deja_fait <= '0';
 		end if;
 
 		if calculation_finished_sig = '1' then
-			give_value <= pick_value_sig;
+			give_value_nxt <= pick_value_sig;
 		else 
-			give_value <= give_value;
+			give_value_nxt <= give_value;
 		end if;
 
 		if msgout_valid = '1' and msgout_ready ='1' then
@@ -162,7 +127,8 @@ begin
 			msgout_sig <= '0';
 		end if;
 	end process;
-    
+    pick_value_sig <= pick_value_sig_nxt;
+	give_value <= give_value_nxt;
     
 	rsa_status   <= (others => '0');
 	
