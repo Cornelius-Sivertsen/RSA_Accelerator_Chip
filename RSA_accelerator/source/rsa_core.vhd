@@ -140,29 +140,18 @@ begin
 			pick_value_sig_nxt <= msgin_last;
 			deja_fait_nxt <= '1';
 		else 
-			--pick_value_sig <= pick_value_sig;
 			deja_fait_nxt <= '0';
 		end if;
 
 		if calculation_finished_sig = '1' then
 			give_value_nxt <= pick_value_sig;
-		-- else 
-		-- 	give_value <= give_value;
-			give_value_nxt <= pick_value_sig;
-		-- else 
-		-- 	give_value <= give_value;
 		end if;
 
 		if msgout_valid = '1' and msgout_ready ='1' then
 			msgout_sig <= give_value;
-		-- else
-		-- 	msgout_sig <= '0';
-		-- else
-		-- 	msgout_sig <= '0';
 		end if;
 	end process;
     
     
-	rsa_status   <= (others => '0');
-	
+	rsa_status   <= (others => '0');	
 end rtl;
