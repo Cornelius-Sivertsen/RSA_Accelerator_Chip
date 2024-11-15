@@ -95,6 +95,7 @@ begin
 		);
 	
 	
+	
 	msgout_last <= msgout_sig ;
 	msgin_ready <= ready_in ;
 
@@ -123,7 +124,13 @@ begin
 		msgout_ready
 	)
 
+
     begin
+
+		pick_value_sig_nxt <= pick_value_sig;
+    	give_value_nxt <= give_value;
+    	msgout_sig <= '0';
+		
 
 		pick_value_sig_nxt <= pick_value_sig;
     	give_value_nxt <= give_value;
@@ -141,10 +148,15 @@ begin
 			give_value_nxt <= pick_value_sig;
 		-- else 
 		-- 	give_value <= give_value;
+			give_value_nxt <= pick_value_sig;
+		-- else 
+		-- 	give_value <= give_value;
 		end if;
 
 		if msgout_valid = '1' and msgout_ready ='1' then
 			msgout_sig <= give_value;
+		-- else
+		-- 	msgout_sig <= '0';
 		-- else
 		-- 	msgout_sig <= '0';
 		end if;
