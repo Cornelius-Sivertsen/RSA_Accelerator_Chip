@@ -131,11 +131,6 @@ begin
     	give_value_nxt <= give_value;
     	msgout_sig <= '0';
 		
-
-		pick_value_sig_nxt <= pick_value_sig;
-    	give_value_nxt <= give_value;
-    	msgout_sig <= '0';
-		
 		if ready_in = '1' and msgin_valid = '1' and deja_fait ='0' then
 			pick_value_sig_nxt <= msgin_last;
 			deja_fait_nxt <= '1';
