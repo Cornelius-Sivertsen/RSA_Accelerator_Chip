@@ -220,8 +220,6 @@ architecture expBehave_2 of exponentiation is
     signal calculation_finished        : std_logic;
 
     --signal de testbench
-    signal TEST_VAR         :  std_logic;
-    signal test_if          : std_logic;
     signal buffer_blk_1     :std_logic;
     signal buffer_blk_1_nxt: std_logic;
 begin
@@ -279,6 +277,7 @@ begin
             Input_blk_1_ready <= '0';
             result_r <= (others => '0');
             register_enter <= (others => '0');
+            buffer_blk_1<='0';
         elsif rising_edge (clk) then
             trigger_r <= trigger_nxt;
             C_r <= C_nxt;
@@ -325,21 +324,17 @@ begin
                 C_nxt <= Sortie_blk_1;      
                 trigger_var := '1';
 				buffer_blk_1_nxt <= '0';
-				test_if <= '0';
             elsif Ready_blk_2 ='1' then     -- Waiting for Blackley_2 to be finished
                 C_nxt <= Sortie_blk_2;
                 trigger_var := '1';
 				buffer_blk_1_nxt <= '0';
-				test_if <= '1';
             else 
                 trigger_var :='0';
-				test_if <= '0';
 				buffer_blk_1_nxt <= '1';
             end if;
         else
 			buffer_blk_1_nxt <= '0';
 			trigger_var := '0';
-			test_if <= '0';             -- Reset trigger if Ready_blk_1 is not 1  
         end if;
         
         trigger_nxt <= trigger_var;
